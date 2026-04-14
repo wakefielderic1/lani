@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --terra: #C4745A;
+    --terra2: #A35A40;
+    --brown: #5C3D2E;
+    --sand: #FDF6EF;
+    --sand2: #F5EBE0;
+    --muted: #8B6E5F;
+    --light: #BBA090;
+    --white: #FFFCF9;
+    --green: #0F6E56;
+    --purple: #534AB7;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--white);
+    color: var(--brown);
+    font-size: 13px;
+    line-height: 1.6;
+    padding: 0;
+    margin: 0;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    background: var(--brown);
+    padding: 40px 56px 36px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+  .logo {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 36px;
+    font-weight: 400;
+    color: var(--sand);
+    letter-spacing: 4px;
+    text-transform: lowercase;
+  }
+  .header-right {
+    text-align: right;
+  }
+  .header-label {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: rgba(253,246,239,.4);
+    margin-bottom: 4px;
+  }
+  .header-property {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    font-weight: 400;
+    color: var(--sand);
+    font-style: italic;
+  }
+  .header-date {
+    font-size: 11px;
+    color: rgba(253,246,239,.35);
+    margin-top: 4px;
+  }
+
+  /* ── TERRA STRIP ── */
+  .terra-strip {
+    background: var(--terra);
+    padding: 14px 56px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .strip-text {
+    font-size: 12px;
+    color: rgba(255,255,255,.85);
+    font-weight: 300;
+    letter-spacing: 0.3px;
+  }
+  .strip-text strong { font-weight: 500; color: #fff; }
+
+  /* ── BODY ── */
+  .body { padding: 44px 56px; }
+
+  /* ── OPENING ── */
+  .opening {
+    margin-bottom: 36px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid var(--sand2);
+  }
+  .opening-eyebrow {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--terra);
+    margin-bottom: 10px;
+  }
+  .opening-headline {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px;
+    font-weight: 400;
+    color: var(--brown);
+    line-height: 1.25;
+    margin-bottom: 14px;
+  }
+  .opening-headline em { font-style: italic; color: var(--terra); }
+  .opening-body {
+    font-size: 13px;
+    font-weight: 300;
+    color: var(--muted);
+    line-height: 1.8;
+    max-width: 520px;
+  }
+
+  /* ── LOSS HIGHLIGHT ── */
+  .loss-block {
+    background: var(--sand);
+    border-radius: 16px;
+    border: 1px solid rgba(196,116,90,.15);
+    padding: 28px 32px;
+    margin-bottom: 28px;
+    display: flex;
+    align-items: center;
+    gap: 32px;
+  }
+  .loss-main { flex: 0 0 auto; text-align: center; }
+  .loss-label {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--light);
+    margin-bottom: 6px;
+  }
+  .loss-number {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 52px;
+    font-weight: 400;
+    color: var(--terra);
+    line-height: 1;
+    letter-spacing: -1px;
+  }
+  .loss-period {
+    font-size: 13px;
+    color: var(--light);
+    margin-top: 4px;
+  }
+  .loss-divider {
+    width: 1px;
+    height: 60px;
+    background: rgba(196,116,90,.2);
+    flex-shrink: 0;
+  }
+  .loss-breakdown { flex: 1; }
+  .loss-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 5px 0;
+    border-bottom: 1px solid rgba(196,116,90,.08);
+    font-size: 12px;
+  }
+  .loss-row:last-child { border-bottom: none; }
+  .loss-row-label { color: var(--muted); font-weight: 300; }
+  .loss-row-val { font-weight: 500; color: var(--brown); }
+
+  /* ── SECTION TITLE ── */
+  .section-title {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--terra);
+    margin-bottom: 14px;
+  }
+
+  /* ── SEASONS ── */
+  .seasons {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+  .season {
+    border-radius: 12px;
+    padding: 18px;
+    border: 1px solid;
+  }
+  .season-high { background: #FFF8F0; border-color: rgba(196,116,90,.25); }
+  .season-low  { background: #F0F7F4; border-color: rgba(15,110,86,.2); }
+  .season-typhoon { background: #F4F3FA; border-color: rgba(83,74,183,.18); }
+  .season-icon { font-size: 18px; margin-bottom: 6px; }
+  .season-name {
+    font-size: 9px;
+    font-weight: 500;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 5px;
+  }
+  .season-high .season-name { color: var(--terra); }
+  .season-low .season-name  { color: var(--green); }
+  .season-typhoon .season-name { color: var(--purple); }
+  .season-val {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    font-weight: 400;
+    margin-bottom: 6px;
+  }
+  .season-high .season-val { color: var(--terra); }
+  .season-low .season-val  { color: var(--green); }
+  .season-typhoon .season-val { color: var(--purple); }
+  .season-desc {
+    font-size: 10px;
+    font-weight: 300;
+    color: var(--muted);
+    line-height: 1.55;
+  }
+
+  /* ── RECOVERY TABLE ── */
+  .recovery-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 28px;
+  }
+  .recovery-table thead tr {
+    background: var(--sand2);
+  }
+  .recovery-table th {
+    padding: 10px 16px;
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--light);
+    text-align: left;
+    font-weight: 500;
+  }
+  .recovery-table th:not(:first-child) { text-align: right; }
+  .recovery-table td {
+    padding: 11px 16px;
+    font-size: 12px;
+    color: var(--muted);
+    border-bottom: 1px solid rgba(196,116,90,.08);
+    font-weight: 300;
+  }
+  .recovery-table td:not(:first-child) {
+    text-align: right;
+    font-weight: 400;
+    color: var(--brown);
+  }
+  .recovery-table tr.total td {
+    font-weight: 500;
+    color: var(--brown);
+    border-top: 1px solid rgba(196,116,90,.2);
+    border-bottom: none;
+    font-size: 13px;
+    background: var(--sand);
+  }
+  .recovery-table tr.total td:not(:first-child) {
+    color: var(--terra);
+  }
+
+  /* ── PROPERTY DETAILS ── */
+  .details-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 28px;
+  }
+  .detail-card {
+    background: var(--sand);
+    border-radius: 10px;
+    padding: 14px 16px;
+    border: 1px solid rgba(196,116,90,.12);
+  }
+  .detail-label {
+    font-size: 9px;
+    font-weight: 500;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--light);
+    margin-bottom: 5px;
+  }
+  .detail-val {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px;
+    font-weight: 400;
+    color: var(--brown);
+  }
+
+  /* ── CHANNELS & PAIN ── */
+  .tags-wrap { margin-bottom: 28px; }
+  .tags-label {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--terra);
+    margin-bottom: 10px;
+  }
+  .tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .tag {
+    background: var(--sand2);
+    border: 1px solid rgba(196,116,90,.2);
+    border-radius: 50px;
+    padding: 4px 12px;
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 300;
+  }
+
+  /* ── PRICING BOX ── */
+  .pricing-box {
+    background: var(--brown);
+    border-radius: 16px;
+    padding: 28px 32px;
+    margin-bottom: 28px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 24px;
+  }
+  .pricing-text h3 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    font-weight: 400;
+    color: var(--sand);
+    margin-bottom: 6px;
+  }
+  .pricing-text p {
+    font-size: 12px;
+    font-weight: 300;
+    color: rgba(253,246,239,.5);
+    line-height: 1.6;
+    max-width: 340px;
+  }
+  .pricing-numbers { text-align: right; flex-shrink: 0; }
+  .pricing-amount {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 36px;
+    font-weight: 300;
+    color: var(--sand);
+    line-height: 1;
+  }
+  .pricing-amount sub {
+    font-size: 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+  }
+  .pricing-period {
+    font-size: 11px;
+    color: rgba(253,246,239,.35);
+    margin-top: 4px;
+  }
+  .pricing-guarantee {
+    font-size: 10px;
+    color: var(--terra);
+    margin-top: 6px;
+    letter-spacing: 0.5px;
+  }
+
+  /* ── FOOTER ── */
+  .footer {
+    background: var(--sand2);
+    padding: 22px 56px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid rgba(196,116,90,.12);
+  }
+  .footer-logo {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px;
+    color: var(--terra);
+    letter-spacing: 3px;
+  }
+  .footer-note {
+    font-size: 10px;
+    color: var(--light);
+    font-weight: 300;
+  }
+  .footer-contact {
+    font-size: 10px;
+    color: var(--muted);
+    text-align: right;
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="logo">lani</div>
+  <div class="header-right">
+    <div class="header-label">Personalized proposal for</div>
+    <div class="header-property">{{propertyName}}</div>
+    <div class="header-date">{{submittedAt}}</div>
+  </div>
+</div>
+
+<!-- TERRA STRIP -->
+<div class="terra-strip">
+  <div class="strip-text">Prepared for <strong>{{name}}</strong> · {{whatsapp}} · {{email}}</div>
+  <div class="strip-text"><strong>Confidential</strong> · lani.ph</div>
+</div>
+
+<!-- BODY -->
+<div class="body">
+
+  <!-- OPENING -->
+  <div class="opening">
+    <div class="opening-eyebrow">Revenue Recovery Analysis</div>
+    <div class="opening-headline">Here's what <em>{{propertyName}}</em><br>is leaving on the table.</div>
+    <div class="opening-body">Based on your property's size, nightly rate, and current response speed, we've calculated the revenue slipping away every day — and what Lani would recover for you starting in month one.</div>
+  </div>
+
+  <!-- LOSS HIGHLIGHT -->
+  <div class="loss-block">
+    <div class="loss-main">
+      <div class="loss-label">Lost per month</div>
+      <div class="loss-number">${{perMonth}}</div>
+      <div class="loss-period">every month, right now</div>
+    </div>
+    <div class="loss-divider"></div>
+    <div class="loss-breakdown">
+      <div class="loss-row">
+        <span class="loss-row-label">Per hour</span>
+        <span class="loss-row-val">${{perHour}}</span>
+      </div>
+      <div class="loss-row">
+        <span class="loss-row-label">Per day</span>
+        <span class="loss-row-val">${{perDay}}</span>
+      </div>
+      <div class="loss-row">
+        <span class="loss-row-label">Per week</span>
+        <span class="loss-row-val">${{perWeek}}</span>
+      </div>
+      <div class="loss-row">
+        <span class="loss-row-label">Per year</span>
+        <span class="loss-row-val">${{conservativeYear}}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- SEASONAL -->
+  <div class="section-title">How this breaks down by season</div>
+  <div class="seasons">
+    <div class="season season-high">
+      <div class="season-icon">🌅</div>
+      <div class="season-name">High Season</div>
+      <div class="season-val">${{highSeason}}/mo</div>
+      <div class="season-desc">Nov–May. Peak demand — every unanswered message costs the most here.</div>
+    </div>
+    <div class="season season-low">
+      <div class="season-icon">🌿</div>
+      <div class="season-name">Low Season</div>
+      <div class="season-val">${{lowSeason}}/mo</div>
+      <div class="season-desc">Jun–Aug. Every booking counts more. Fast response fills rooms others leave empty.</div>
+    </div>
+    <div class="season season-typhoon">
+      <div class="season-icon">🌀</div>
+      <div class="season-name">Typhoon Season</div>
+      <div class="season-val">${{typhoonSeason}}/mo</div>
+      <div class="season-desc">Sep–Oct. Operators who stay responsive now fill up first when High Season returns.</div>
+    </div>
+  </div>
+
+  <!-- RECOVERY TABLE -->
+  <div class="section-title">Where the recovery comes from — Year 1</div>
+  <table class="recovery-table">
+    <thead>
+      <tr>
+        <th>Module</th>
+        <th>Conservative</th>
+        <th>Aggressive</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Missed booking recovery</td>
+        <td>{{r1c}}</td>
+        <td>{{r1a}}</td>
+      </tr>
+      <tr>
+        <td>Review automation</td>
+        <td>{{r2c}}</td>
+        <td>{{r2a}}</td>
+      </tr>
+      <tr>
+        <td>Direct booking growth</td>
+        <td>{{r3c}}</td>
+        <td>{{r3a}}</td>
+      </tr>
+      <tr>
+        <td>Guest journey upsells</td>
+        <td>{{r4c}}</td>
+        <td>{{r4a}}</td>
+      </tr>
+      <tr class="total">
+        <td>Total year-one recovery</td>
+        <td>{{conservativeYear}}</td>
+        <td>{{aggressiveYear}}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- PROPERTY DETAILS -->
+  <div class="section-title">Your property profile</div>
+  <div class="details-grid">
+    <div class="detail-card">
+      <div class="detail-label">Rooms / units</div>
+      <div class="detail-val">{{rooms}}</div>
+    </div>
+    <div class="detail-card">
+      <div class="detail-label">Avg nightly rate</div>
+      <div class="detail-val">${{rate}}</div>
+    </div>
+    <div class="detail-card">
+      <div class="detail-label">Current occupancy</div>
+      <div class="detail-val">{{occupancy}}%</div>
+    </div>
+    <div class="detail-card">
+      <div class="detail-label">Response speed</div>
+      <div class="detail-val" style="font-size:14px">{{responseSpeed}}</div>
+    </div>
+    <div class="detail-card">
+      <div class="detail-label">Weekly hours lost</div>
+      <div class="detail-val" style="font-size:14px">{{hours}}</div>
+    </div>
+  </div>
+
+  <!-- CHANNELS -->
+  <div class="tags-wrap">
+    <div class="tags-label">Active channels</div>
+    <div class="tags" id="channels-tags">
+      {{channelTags}}
+    </div>
+  </div>
+
+  <!-- PRICING -->
+  <div class="pricing-box">
+    <div class="pricing-text">
+      <h3>Ready to recover this revenue?</h3>
+      <p>Lani starts working from day one — answering every inquiry, growing your reviews, and converting more guests directly. Most operators break even within 60 days.</p>
+    </div>
+    <div class="pricing-numbers">
+      <div class="pricing-amount">$500<sub>/mo</sub></div>
+      <div class="pricing-period">+ $2,500 one-time setup</div>
+      <div class="pricing-guarantee">60-Day Money Back Guarantee</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  <div class="footer-logo">lani</div>
+  <div class="footer-note">Serving independent operators across the Philippines · lani.ph</div>
+  <div class="footer-contact">hello@lani.ph · WhatsApp available</div>
+</div>
+
+</body>
+</html>
