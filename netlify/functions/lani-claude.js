@@ -21,6 +21,7 @@ exports.handler = async (event) => {
     if (!systemPrompt || !userMessage) {
       return {
         statusCode: 400,
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ error: "Missing systemPrompt or userMessage" })
       };
     }
@@ -45,18 +46,21 @@ exports.handler = async (event) => {
     if (data.error) {
       return {
         statusCode: 500,
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ error: data.error.message })
       };
     }
 
     return {
       statusCode: 200,
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ reply: data.content[0].text })
     };
 
   } catch (err) {
     return {
       statusCode: 500,
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ error: err.message })
     };
   }
