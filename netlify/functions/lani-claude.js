@@ -1,11 +1,22 @@
 exports.handler = async (event) => {
-  // Solo acepta POST
   if (event.httpMethod !== "POST") {
     return { statusCode: 405, body: "Method Not Allowed" };
   }
 
   try {
-    const { systemPrompt, userMessage } = JSON.parse(event.body);
+    let systemPrompt, userMessage;
+
+    const contentType = event.headers["content-type"] || "";
+
+    if (contentType.includes("application/x-www-form-urlencoded")) {
+      const params = new URLSearchParams(event.body);
+      systemPrompt = params.get("systemPrompt");
+      userMessage = params.get("userMessage");
+    } else {
+      const body = JSON.parse(event.body);
+      systemPrompt = body.systemPrompt;
+      userMessage = body.userMessage;
+    }
 
     if (!systemPrompt || !userMessage) {
       return {
