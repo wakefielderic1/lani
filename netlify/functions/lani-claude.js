@@ -47,35 +47,184 @@ async function summarizeHistory(messages, systemPrompt) {
   return data.content?.[0]?.text || "";
 }
 
+// Detecta qué propiedad eligió el huésped basándose en su mensaje
+async function detectPropertyFromMessage(userMessage, propertiesList) {
+  const propertiesText = propertiesList.map((p, i) =>
+    `${i + 1}. property_id: "${p.property_id}" | name: "${p.name}" | location: "${p.location || ""}"`
+  ).join("\n");
+
+  const detectionPrompt = `You are helping identify which hotel a guest wants to contact.
+
+Available properties:
+${propertiesText}
+
+Guest message: "${userMessage}"
+
+Instructions:
+- If the guest clearly refers to one property (by name, number, location, or partial match), return that property_id.
+- If the message is ambiguous and could match more than one property, return "AMBIGUOUS".
+- If the message doesn't seem to be choosing a property at all, return "NONE".
+
+Respond ONLY with the property_id value, "AMBIGUOUS", or "NONE". No explanation.`;
+
+  const response = await fetch(ANTHROPIC_API, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": process.env.ANTHROPIC_KEY,
+      "anthropic-version": "2023-06-01"
+    },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-6",
+      max_tokens: 50,
+      messages: [{ role: "user", content: detectionPrompt }]
+    })
+  });
+
+  const data = await response.json();
+  return (data.content?.[0]?.text || "NONE").trim();
+}
+
 exports.handler = async (event) => {
   if (event.httpMethod !== "POST") {
     return { statusCode: 405, body: "Method Not Allowed" };
   }
 
   try {
-    let systemPrompt, userMessage, history, ownerWhatsapp;
+    let systemPrompt, userMessage, history, ownerWhatsapp, propertyId, propertiesListRaw;
 
     const contentType = event.headers["content-type"] || "";
 
     if (contentType.includes("application/x-www-form-urlencoded")) {
       const params = new URLSearchParams(event.body);
-      systemPrompt = params.get("systemPrompt");
+      systemPrompt = params.get("systemPrompt") || "";
       userMessage = params.get("userMessage");
       history = params.get("history") || "[]";
       ownerWhatsapp = params.get("ownerWhatsapp") || "";
+      propertyId = params.get("propertyId") || "";
+      propertiesListRaw = params.get("propertiesList") || "[]";
     } else {
       const body = JSON.parse(event.body);
-      systemPrompt = body.systemPrompt;
+      systemPrompt = body.systemPrompt || "";
       userMessage = body.userMessage;
       history = body.history || "[]";
       ownerWhatsapp = body.ownerWhatsapp || "";
+      propertyId = body.propertyId || "";
+      propertiesListRaw = body.propertiesList || "[]";
     }
 
-    if (!systemPrompt || !userMessage) {
+    if (!userMessage) {
       return {
         statusCode: 400,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ error: "Missing systemPrompt or userMessage" })
+        body: JSON.stringify({ error: "Missing userMessage" })
+      };
+    }
+
+    // Parsear lista de propiedades
+    let propertiesList = [];
+    try {
+      propertiesList = JSON.parse(propertiesListRaw);
+    } catch (e) {
+      propertiesList = [];
+    }
+
+    // ─────────────────────────────────────────────
+    // MODO IDENTIFICACIÓN — no hay propertyId aún
+    // ─────────────────────────────────────────────
+    if (!propertyId && propertiesList.length > 0) {
+
+      // Intentar detectar si el huésped ya mencionó un hotel
+      const detected = await detectPropertyFromMessage(userMessage, propertiesList);
+
+      if (detected !== "NONE" && detected !== "AMBIGUOUS" && propertiesList.find(p => p.property_id === detected)) {
+        // Detección exitosa — confirmar y arrancar
+        const confirmedProperty = propertiesList.find(p => p.property_id === detected);
+        const confirmMsg = `Hi! I'm LANI, your virtual assistant for *${confirmedProperty.name}*. How can I help you today? 😊`;
+
+        const updatedMessages = [
+          { role: "user", content: userMessage },
+          { role: "assistant", content: confirmMsg }
+        ];
+
+        return {
+          statusCode: 200,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            reply: confirmMsg,
+            updatedHistory: JSON.stringify(updatedMessages),
+            needsEscalation: false,
+            escalationKeyword: null,
+            detectedPropertyId: detected
+          })
+        };
+      }
+
+      // No se detectó o es ambiguo — preguntar al huésped
+      const propertyOptions = propertiesList.map((p, i) =>
+        `${i + 1}. ${p.name}${p.location ? ` — ${p.location}` : ""}`
+      ).join("\n");
+
+      let selectionPrompt;
+      if (detected === "AMBIGUOUS") {
+        selectionPrompt = `Hi! I found more than one property matching your search. Which one would you like to contact?\n\n${propertyOptions}\n\nJust reply with the number or name. 😊`;
+      } else {
+        selectionPrompt = `Hi! I'm LANI 👋 Which property would you like to contact?\n\n${propertyOptions}\n\nJust reply with the number or name.`;
+      }
+
+      const updatedMessages = [
+        { role: "user", content: userMessage },
+        { role: "assistant", content: selectionPrompt }
+      ];
+
+      return {
+        statusCode: 200,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          reply: selectionPrompt,
+          updatedHistory: JSON.stringify(updatedMessages),
+          needsEscalation: false,
+          escalationKeyword: null,
+          detectedPropertyId: null
+        })
+      };
+    }
+
+    // ─────────────────────────────────────────────
+    // MODO SELECCIÓN — propertyId vacío, historial existente
+    // El huésped acaba de responder a la lista de opciones
+    // ─────────────────────────────────────────────
+    if (!propertyId && propertiesList.length > 0) {
+      // Este bloque ya fue manejado arriba, pero por seguridad:
+      const detected = await detectPropertyFromMessage(userMessage, propertiesList);
+      if (detected !== "NONE" && detected !== "AMBIGUOUS") {
+        const confirmedProperty = propertiesList.find(p => p.property_id === detected);
+        const confirmMsg = confirmedProperty
+          ? `Perfect! Connecting you with *${confirmedProperty.name}*. How can I help you? 😊`
+          : "I'm not sure which property you mean. Could you type the exact name or number from the list?";
+
+        return {
+          statusCode: 200,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            reply: confirmMsg,
+            updatedHistory: JSON.stringify([{ role: "user", content: userMessage }, { role: "assistant", content: confirmMsg }]),
+            needsEscalation: false,
+            escalationKeyword: null,
+            detectedPropertyId: detected !== "NONE" && detected !== "AMBIGUOUS" ? detected : null
+          })
+        };
+      }
+    }
+
+    // ─────────────────────────────────────────────
+    // MODO NORMAL — propertyId existe, responder como LANI
+    // ─────────────────────────────────────────────
+    if (!systemPrompt) {
+      return {
+        statusCode: 400,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ error: "Missing systemPrompt for known property" })
       };
     }
 
@@ -86,7 +235,6 @@ exports.handler = async (event) => {
     try {
       const parsed = JSON.parse(history);
 
-      // Si hay resumen guardado, usarlo
       if (parsed.summary) {
         conversationSummary = parsed.summary;
         previousMessages = parsed.messages || [];
@@ -94,11 +242,10 @@ exports.handler = async (event) => {
         previousMessages = Array.isArray(parsed) ? parsed : [];
       }
 
-      // Si el historial es muy largo, resumir
       if (previousMessages.length >= SUMMARY_THRESHOLD) {
         const summary = await summarizeHistory(previousMessages, systemPrompt);
         conversationSummary = summary;
-        previousMessages = previousMessages.slice(-4); // Mantener últimos 4 mensajes
+        previousMessages = previousMessages.slice(-4);
       } else if (previousMessages.length > MAX_HISTORY) {
         previousMessages = previousMessages.slice(-MAX_HISTORY);
       }
@@ -107,21 +254,17 @@ exports.handler = async (event) => {
       previousMessages = [];
     }
 
-    // Construir system prompt con resumen si existe
     const fullSystemPrompt = conversationSummary
       ? `${systemPrompt}\n\nConversation summary so far: ${conversationSummary}`
       : systemPrompt;
 
-    // Construir mensajes
     const messages = [
       ...previousMessages,
       { role: "user", content: userMessage }
     ];
 
-    // Detectar escalación
     const needsEscalation = detectEscalation(userMessage);
 
-    // Llamar a Claude con timeout
     let assistantReply;
     try {
       const response = await withTimeout(
@@ -153,16 +296,15 @@ exports.handler = async (event) => {
     } catch (err) {
       if (err.message === "TIMEOUT") {
         assistantReply = ownerWhatsapp
-          ? `Sorry, I'm having a slow connection right now. Please contact us directly at ${ownerWhatsapp} for immediate assistance. We'll respond as soon as possible!`
-          : "Sorry, I'm experiencing a slow connection. Please try again in a moment or contact the property directly.";
+          ? `Sorry, I'm having a slow connection right now. Please contact us directly at ${ownerWhatsapp} for immediate assistance.`
+          : "Sorry, I'm experiencing a slow connection. Please try again in a moment.";
       } else {
         assistantReply = ownerWhatsapp
-          ? `I'm having technical difficulties right now. Please contact us directly at ${ownerWhatsapp} and we'll assist you right away!`
+          ? `I'm having technical difficulties right now. Please contact us directly at ${ownerWhatsapp}.`
           : "I'm having technical difficulties. Please try again in a moment.";
       }
     }
 
-    // Construir historial actualizado
     const updatedMessages = [
       ...previousMessages,
       { role: "user", content: userMessage },
@@ -184,7 +326,8 @@ exports.handler = async (event) => {
         needsEscalation: needsEscalation,
         escalationKeyword: needsEscalation
           ? ESCALATION_KEYWORDS.find(k => userMessage.toLowerCase().includes(k))
-          : null
+          : null,
+        detectedPropertyId: null
       })
     };
 
