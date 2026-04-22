@@ -65,22 +65,35 @@ ${propertiesText}
 Guest message: "${userMessage}"
 
 Your job is to match the guest's message to one of the properties above. Be flexible and intelligent:
+
+NAME MATCHING:
 - Match partial names: "frederick hotel" → property named "Frederick"
-- Match with typos: "frederik", "frederic" → "Frederick"  
-- Match by location: "hotel in USA", "something in San Francisco" → properties in USA/San Francisco
-- Match by country/region even if no specific name is given
-- If the guest mentions a city or country that matches only ONE property, return that property_id
-- If the guest mentions a city or country that matches MULTIPLE properties, return "LOCATION_MULTIPLE:[country or city they mentioned]"
-- If the message is completely ambiguous with no location or name hints, return "NONE"
-- If it could match more than one property and there's no location hint, return "AMBIGUOUS"
+- Match with typos or spelling variations: "frederik", "frederic", "bay lantern" → match closest property
+- Match nicknames or shortened names
 
-Respond ONLY with:
-- The exact property_id value (e.g. "frederick")
-- "AMBIGUOUS"  
+LOCATION MATCHING (handle any language and variation):
+- "USA", "United States", "Estados Unidos", "EUA", "EEUU", "America", "Norteamerica" → all mean United States
+- "Filipinas", "Philippines", "Pilipinas", "Pinas", "PH" → all mean Philippines
+- "México", "Mexico", "Mex" → all mean Mexico
+- "España", "Spain", "Espana" → all mean Spain
+- "Tailandia", "Thailand", "Thai" → all mean Thailand
+- Apply the same multilingual logic to ANY country mentioned
+- City names also count: "San Francisco", "Manila", "Siargao", "Palawan", etc.
+- If guest says "hoteles en X" or "hotel in X" or "algo en X" — treat X as a location filter
+
+DECISION RULES:
+- If location or name matches exactly ONE property → return that property_id
+- If location matches MULTIPLE properties → return "LOCATION_MULTIPLE:[the location term the guest used, as-is]"
+- If message has no useful hints → return "NONE"
+- If hints exist but match multiple and no location → return "AMBIGUOUS"
+
+Respond ONLY with one of:
+- The exact property_id (e.g. "frederick")
+- "AMBIGUOUS"
 - "NONE"
-- "LOCATION_MULTIPLE:USA" (replace USA with the location they mentioned)
+- "LOCATION_MULTIPLE:USA" (use whatever location term the guest actually wrote)
 
-No explanation. No other text.`;
+No explanation. No punctuation. No other text.`;
 
   const response = await fetch(ANTHROPIC_API, {
     method: "POST",
@@ -100,20 +113,113 @@ No explanation. No other text.`;
   return (data.content?.[0]?.text || "NONE").trim();
 }
 
-// Construye el mensaje de selección agrupando propiedades por país
+// ─────────────────────────────────────────────────────────────
+// NORMALIZACIÓN DE PAÍSES
+// Mapea variaciones en cualquier idioma al nombre canónico
+// ─────────────────────────────────────────────────────────────
+const COUNTRY_ALIASES = {
+  // USA
+  "usa": "United States",
+  "us": "United States",
+  "united states": "United States",
+  "united states of america": "United States",
+  "estados unidos": "United States",
+  "eua": "United States",
+  "eeuu": "United States",
+  "america": "United States",
+  "norteamerica": "United States",
+  "north america": "United States",
+  "u.s.": "United States",
+  "u.s.a.": "United States",
+  // Philippines
+  "philippines": "Philippines",
+  "filipinas": "Philippines",
+  "pilipinas": "Philippines",
+  "pinas": "Philippines",
+  "ph": "Philippines",
+  "phils": "Philippines",
+  // Mexico
+  "mexico": "Mexico",
+  "méxico": "Mexico",
+  "mex": "Mexico",
+  // Spain
+  "spain": "Spain",
+  "españa": "Spain",
+  "espana": "Spain",
+  // Thailand
+  "thailand": "Thailand",
+  "tailandia": "Thailand",
+  "thai": "Thailand",
+  // Indonesia
+  "indonesia": "Indonesia",
+  "bali": "Indonesia",
+  // Japan
+  "japan": "Japan",
+  "japon": "Japan",
+  "japón": "Japan",
+  // France
+  "france": "France",
+  "francia": "France",
+  // Italy
+  "italy": "Italy",
+  "italia": "Italy",
+  // Portugal
+  "portugal": "Portugal",
+  // Colombia
+  "colombia": "Colombia",
+  // Peru
+  "peru": "Peru",
+  "perú": "Peru",
+  // Argentina
+  "argentina": "Argentina",
+  // Brazil
+  "brazil": "Brazil",
+  "brasil": "Brazil",
+  // Australia
+  "australia": "Australia",
+  // UK
+  "uk": "United Kingdom",
+  "united kingdom": "United Kingdom",
+  "england": "United Kingdom",
+  "britain": "United Kingdom",
+  "reino unido": "United Kingdom",
+  "inglaterra": "United Kingdom",
+  // Canada
+  "canada": "Canada",
+  "canadá": "Canada",
+};
+
+// Normaliza un string de ubicación al nombre canónico de país si existe
+function normalizeLocation(loc) {
+  if (!loc) return loc;
+  const lower = loc.toLowerCase().trim();
+  return COUNTRY_ALIASES[lower] || loc;
+}
+
+// Verifica si dos strings de ubicación son equivalentes
+function locationsMatch(a, b) {
+  if (!a || !b) return false;
+  const normA = normalizeLocation(a).toLowerCase();
+  const normB = normalizeLocation(b).toLowerCase();
+  return normA.includes(normB) || normB.includes(normA);
+}
 function buildSelectionMessage(propertiesList, filterLocation) {
   let filtered = propertiesList;
 
   if (filterLocation) {
-    const loc = filterLocation.toLowerCase();
-    filtered = propertiesList.filter(p =>
-      (p.location || "").toLowerCase().includes(loc)
-    );
-    // Si el filtro no devuelve nada, mostrar todas
+    const normalizedFilter = normalizeLocation(filterLocation).toLowerCase();
+    filtered = propertiesList.filter(p => {
+      const propLocation = (p.location || "").toLowerCase();
+      const propNormalized = normalizeLocation(p.location || "").toLowerCase();
+      return propLocation.includes(normalizedFilter) ||
+             propNormalized.includes(normalizedFilter) ||
+             normalizedFilter.includes(propNormalized) ||
+             locationsMatch(filterLocation, p.location);
+    });
     if (filtered.length === 0) filtered = propertiesList;
   }
 
-  // Agrupar por país
+  // Agrupar por país (parte después de la última coma)
   const grouped = {};
   filtered.forEach(p => {
     const parts = (p.location || "").split(",");
@@ -140,6 +246,7 @@ function buildSelectionMessage(propertiesList, filterLocation) {
 
   return { optionsText: optionsText.trim(), flatList };
 }
+
 
 exports.handler = async (event) => {
   if (event.httpMethod !== "POST") {
