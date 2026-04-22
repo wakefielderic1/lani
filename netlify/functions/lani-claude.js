@@ -253,10 +253,23 @@ function buildSelectionMessage(propertiesList, filterLocation) {
 // Claude usa markdown estándar, WhatsApp tiene su propio formato
 // ─────────────────────────────────────────────────────────────
 function formatForWhatsApp(text) {
+  // Convertir tablas markdown a texto plano legible
+  // Ejemplo: | Garden Room | 120 PHP | → 🏠 Garden Room: 120 PHP
+  text = text.replace(/\|(.+)\|/g, (match, content) => {
+    // Ignorar líneas separadoras como |---|---|
+    if (/^[\s\-\|]+$/.test(match)) return '';
+    // Convertir celdas a texto separado por " · "
+    const cells = content.split('|')
+      .map(c => c.trim())
+      .filter(c => c.length > 0 && !/^[-\s]+$/.test(c));
+    if (cells.length === 0) return '';
+    return cells.join(': ');
+  });
+
   return text
     // **negrita** → *negrita* (WhatsApp bold)
     .replace(/\*\*(.+?)\*\*/g, '*$1*')
-    // ### Encabezados → solo texto en mayúsculas
+    // ### Encabezados → negrita WhatsApp
     .replace(/#{1,6}\s+(.+)/g, '*$1*')
     // ~~tachado~~ → eliminar
     .replace(/~~(.+?)~~/g, '$1')
@@ -266,6 +279,8 @@ function formatForWhatsApp(text) {
     .replace(/```[\s\S]*?```/g, '')
     // [texto](url) → texto: url
     .replace(/\[(.+?)\]\((.+?)\)/g, '$1: $2')
+    // Líneas horizontales --- → eliminar
+    .replace(/^---+$/gm, '')
     // Limpiar líneas con solo espacios
     .replace(/[ \t]+\n/g, '\n')
     // Máximo 2 saltos de línea consecutivos
