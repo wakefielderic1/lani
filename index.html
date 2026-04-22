@@ -151,22 +151,22 @@
 
   /* ── CULTURAL TAG ── */
   .cultural-tag {
-    text-align: center; padding: 36px 32px;
+    text-align: center; padding: 44px 32px;
     background: var(--sand);
     border-top: 1px solid var(--border-soft);
     border-bottom: 1px solid var(--border-soft);
   }
   .cultural-word {
     font-family: 'Cormorant Garamond', serif;
-    font-size: 13px; font-style: italic; font-weight: 500;
-    color: var(--gold);
-    background: var(--gold-light);
-    display: inline-block; padding: 5px 20px; border-radius: 40px;
-    letter-spacing: 0.04em; margin-bottom: 8px;
+    font-size: clamp(36px, 5vw, 64px);
+    font-style: italic; font-weight: 600;
+    color: var(--ocean);
+    display: block; letter-spacing: -0.5px;
+    line-height: 1.1; margin-bottom: 10px;
   }
   .cultural-meaning {
-    display: block; font-size: 12px; font-weight: 400;
-    color: var(--warm-gray-lt); letter-spacing: 0.1em; text-transform: uppercase;
+    display: block; font-size: 13px; font-weight: 400;
+    color: var(--warm-gray); letter-spacing: 0.14em; text-transform: uppercase;
   }
 
   /* ── SECTIONS ── */
@@ -448,7 +448,180 @@
   .footer-links a { font-size: 13px; color: rgba(255,255,255,0.4); text-decoration: none; }
   .footer-links a:hover { color: rgba(255,255,255,0.8); }
 
-  /* ── ANIMATIONS ── */
+  /* ── HOW IT WORKS ── */
+  .how-section { background: var(--white); }
+  .how-inner { max-width: 1000px; margin: 0 auto; }
+  .how-steps {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 0; margin-top: 56px; position: relative;
+  }
+  .how-steps::before {
+    content: ''; position: absolute;
+    top: 36px; left: calc(16.66% + 16px); right: calc(16.66% + 16px);
+    height: 1px; background: var(--border);
+    z-index: 0;
+  }
+  .how-step { text-align: center; padding: 0 28px; position: relative; z-index: 1; }
+  .how-step-num {
+    width: 72px; height: 72px; border-radius: 50%;
+    background: var(--cream); border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 24px;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px; font-weight: 600; color: var(--ocean);
+  }
+  .how-step-num.active-step {
+    background: var(--ocean); color: var(--white); border-color: var(--ocean);
+  }
+  .how-step-title { font-size: 16px; font-weight: 500; color: var(--charcoal); margin-bottom: 10px; line-height: 1.4; }
+  .how-step-desc { font-size: 14px; font-weight: 300; color: var(--warm-gray); line-height: 1.75; }
+  .how-demo-box {
+    margin-top: 64px;
+    background: var(--ocean);
+    border-radius: 24px; padding: 48px;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center;
+  }
+  .how-demo-text .demo-label {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--gold); margin-bottom: 16px; display: block;
+  }
+  .how-demo-text h3 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 34px; font-weight: 600; color: var(--white);
+    line-height: 1.15; margin-bottom: 16px; letter-spacing: -0.5px;
+  }
+  .how-demo-text p { font-size: 16px; font-weight: 300; color: rgba(255,255,255,0.65); line-height: 1.8; margin-bottom: 28px; }
+  .how-demo-steps { display: flex; flex-direction: column; gap: 14px; margin-bottom: 32px; }
+  .how-demo-step {
+    display: flex; align-items: flex-start; gap: 14px;
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 14px; padding: 14px 18px;
+  }
+  .how-demo-step-n {
+    width: 26px; height: 26px; min-width: 26px; border-radius: 50%;
+    background: var(--gold); color: var(--charcoal);
+    font-size: 12px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .how-demo-step-txt { font-size: 14px; color: rgba(255,255,255,0.8); line-height: 1.6; font-weight: 300; }
+  .how-demo-step-txt strong { color: var(--white); font-weight: 500; }
+  .btn-demo-primary {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--white); color: var(--ocean);
+    padding: 16px 36px; border-radius: 50px;
+    font-size: 15px; font-weight: 700; letter-spacing: 0.01em;
+    text-decoration: none; cursor: pointer; border: none;
+    font-family: 'DM Sans', sans-serif;
+    transition: background 0.2s, transform 0.15s;
+  }
+  .btn-demo-primary:hover { background: var(--gold-light); transform: translateY(-1px); }
+  .how-demo-visual {
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px; padding: 28px; font-size: 14px;
+  }
+  .demo-chat-label {
+    font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: rgba(255,255,255,0.35); margin-bottom: 16px;
+  }
+  .demo-msg { margin-bottom: 10px; }
+  .demo-msg-guest {
+    background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.85);
+    border-radius: 14px 14px 3px 14px; padding: 10px 14px;
+    font-size: 13px; line-height: 1.55; max-width: 85%; margin-left: auto; text-align: right;
+  }
+  .demo-msg-lani {
+    background: var(--white); color: var(--charcoal);
+    border-radius: 14px 14px 14px 3px; padding: 10px 14px;
+    font-size: 13px; line-height: 1.55; max-width: 90%;
+  }
+  .demo-msg-name { font-size: 11px; color: rgba(255,255,255,0.35); margin-bottom: 4px; }
+  .demo-number-box {
+    margin-top: 16px; background: rgba(201,147,58,0.15); border: 1px solid rgba(201,147,58,0.4);
+    border-radius: 12px; padding: 14px 18px; text-align: center;
+  }
+  .demo-number-label { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--gold); margin-bottom: 4px; }
+  .demo-number-val { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 600; color: var(--white); }
+
+  /* ── SCOUT ── */
+  .scout-section { background: var(--charcoal); padding: 96px 52px; }
+  .scout-inner { max-width: 1100px; margin: 0 auto; }
+  .scout-eyebrow {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--gold); margin-bottom: 12px; display: flex; align-items: center; gap: 12px;
+  }
+  .scout-eyebrow::before { content: ''; width: 28px; height: 1px; background: var(--gold); display: inline-block; }
+  .scout-name-display {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(64px, 9vw, 120px);
+    font-weight: 600; color: var(--white);
+    line-height: 0.88; letter-spacing: -3px;
+    margin-bottom: 6px;
+  }
+  .scout-name-display em { font-style: italic; color: var(--ocean-light); }
+  .scout-tagline {
+    font-size: 12px; font-weight: 400; color: var(--warm-gray);
+    letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 40px;
+  }
+  .scout-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 72px; align-items: start; }
+  .scout-subhead {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(22px, 2.4vw, 30px);
+    font-weight: 500; color: rgba(255,255,255,0.8); line-height: 1.3;
+    letter-spacing: -0.3px; margin-bottom: 18px;
+  }
+  .scout-body { font-size: 15px; font-weight: 300; color: rgba(255,255,255,0.4); line-height: 1.85; margin-bottom: 28px; }
+  .scout-features { display: flex; flex-direction: column; gap: 12px; margin-bottom: 36px; }
+  .scout-feature { display: flex; align-items: flex-start; gap: 14px; }
+  .scout-feature-dot { width: 5px; height: 5px; min-width: 5px; border-radius: 50%; background: var(--gold); margin-top: 9px; }
+  .scout-feature-text { font-size: 14px; color: rgba(255,255,255,0.45); font-weight: 300; line-height: 1.6; }
+  .scout-feature-text strong { color: rgba(255,255,255,0.82); font-weight: 500; }
+  .btn-scout {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--ocean); color: var(--white);
+    padding: 14px 32px; border-radius: 50px;
+    font-size: 14px; font-weight: 600; text-decoration: none;
+    transition: background 0.2s, transform 0.15s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .btn-scout:hover { background: var(--ocean-light); transform: translateY(-1px); }
+  .scout-mockup {
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 20px; padding: 28px; font-family: 'DM Sans', sans-serif;
+  }
+  .scout-mockup-header {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 20px;
+    padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .scout-mockup-logo {
+    font-family: 'Cormorant Garamond', serif; font-size: 22px;
+    font-weight: 600; color: var(--white); letter-spacing: -0.5px;
+  }
+  .scout-mockup-by { font-size: 11px; color: rgba(255,255,255,0.2); align-self: flex-end; margin-bottom: 2px; }
+  .scout-mockup-status {
+    font-size: 11px; color: #4ADE80; margin-left: auto;
+    display: flex; align-items: center; gap: 5px;
+  }
+  .scout-result {
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 12px; padding: 14px 18px; margin-bottom: 8px;
+  }
+  .scout-result-name { font-size: 14px; font-weight: 500; color: rgba(255,255,255,0.82); margin-bottom: 3px; }
+  .scout-result-meta { font-size: 12px; color: rgba(255,255,255,0.28); }
+  .scout-result-badge {
+    display: inline-block; margin-top: 8px;
+    font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 3px 10px; border-radius: 40px;
+  }
+  .badge-opportunity { background: rgba(13,92,99,0.3); color: var(--ocean-light); border: 1px solid rgba(13,92,99,0.35); }
+  .badge-new { background: rgba(201,147,58,0.12); color: var(--gold); border: 1px solid rgba(201,147,58,0.25); }
+  @media (max-width: 900px) {
+    .scout-grid { grid-template-columns: 1fr; }
+    .how-steps { grid-template-columns: 1fr; }
+    .how-steps::before { display: none; }
+    .how-demo-box { grid-template-columns: 1fr; }
+  }
+
+
   .fade-in { opacity: 0; transform: translateY(24px); transition: opacity 0.7s ease, transform 0.7s ease; }
   .fade-in.visible { opacity: 1; transform: translateY(0); }
 
@@ -482,10 +655,10 @@
   <span class="nav-logo">lani</span>
   <div class="nav-links">
     <a href="#meet">About Lani</a>
-    <a href="#calculator">Your numbers</a>
-    <a href="#community">Community</a>
+    <a href="#how-it-works">How it works</a>
+    <a href="#scout">SCOUT</a>
     <a href="#pricing">Pricing</a>
-    <a href="#invite" class="nav-cta">Get started</a>
+    <a href="#invite" class="nav-cta">Try the demo</a>
   </div>
 </nav>
 
@@ -495,8 +668,8 @@
     <div class="hero-kicker">AI receptionist for hospitality</div>
     <h1>Your business never <em>stops serving</em> guests.</h1>
     <p class="hero-sub">Every unanswered message is a booking someone else gets. Lani responds for you — in your voice, instantly, at any hour.</p>
-    <a href="#calculator" class="btn-primary fade-in">See what you're losing →</a>
-    <p class="hero-note">Free · 2 minutes · No commitment</p>
+    <a href="#how-it-works" class="btn-primary fade-in">See how the demo works →</a>
+    <p class="hero-note">Free demo · 5 minutes · No commitment</p>
   </div>
   <div class="hero-right">
     <img class="hero-img" src="https://images.unsplash.com/photo-1583416750470-965b2707b355?w=1000&q=85&fit=crop" alt="Tropical boutique hotel Philippines" />
@@ -648,7 +821,7 @@
 <section id="calculator" class="roi-section">
   <div class="roi-inner">
     <div class="section-eyebrow fade-in">Your numbers</div>
-    <p class="roi-intro fade-in">"Let's talk about your business<br>and watch what Lani does with it."</p>
+    <p class="roi-intro fade-in">"How much is your time worth — and how much of it goes to answering messages?"</p>
 
     <div class="roi-box fade-in">
       <div class="roi-progress" id="progressBar">
@@ -657,12 +830,17 @@
         <div class="roi-step" id="s3"></div>
         <div class="roi-step" id="s4"></div>
         <div class="roi-step" id="s5"></div>
-        <div class="roi-step" id="s6"></div>
+      </div>
+
+      <!-- CURRENCY TOGGLE -->
+      <div style="display:flex;align-items:center;gap:0;margin-bottom:28px;width:fit-content;border:1px solid var(--border);border-radius:40px;overflow:hidden;background:var(--cream);">
+        <button id="btnUSD" onclick="setCurrency('USD')" style="padding:8px 20px;border:none;background:var(--ocean);color:white;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;border-radius:40px 0 0 40px;">USD $</button>
+        <button id="btnPHP" onclick="setCurrency('PHP')" style="padding:8px 20px;border:none;background:transparent;color:var(--warm-gray);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;border-radius:0 40px 40px 0;">PHP ₱</button>
       </div>
 
       <div id="roiQuestions">
-        <div class="roi-question" id="questionText">"How many rooms do you have?"</div>
-        <div class="roi-hint" id="questionHint">Tap the button and speak, or type your answer below</div>
+        <div class="roi-question" id="questionText">"How many guest messages do you get per day on average?"</div>
+        <div class="roi-hint" id="questionHint">WhatsApp, Messenger, email — count them all. A rough estimate is fine.</div>
         <div class="mic-row">
           <button class="mic-btn" id="micBtn" onclick="toggleMic()" title="Speak your answer">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="white">
@@ -677,42 +855,49 @@
             Prefer to type? Use the field below.
           </div>
         </div>
-        <input class="roi-input" type="text" id="roiInput" placeholder="Type your answer here…" />
+        <input class="roi-input" type="number" id="roiInput" placeholder="e.g. 15" />
         <button class="roi-next" onclick="nextQuestion()">Next →</button>
         <div style="clear:both"></div>
       </div>
 
       <div class="roi-results" id="roiResults">
         <div class="roi-property-name" id="propertyName"></div>
-        <div class="roi-property-sub">Estimated year-one revenue recovery</div>
-        <table class="roi-table">
-          <thead>
-            <tr>
-              <th>Module</th>
-              <th>Conservative</th>
-              <th>Aggressive</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr><td>Missed booking recovery</td><td id="r1c"></td><td id="r1a"></td></tr>
-            <tr><td>Review automation</td><td id="r2c"></td><td id="r2a"></td></tr>
-            <tr><td>Direct booking growth</td><td id="r3c"></td><td id="r3a"></td></tr>
-            <tr><td>Guest journey upsell</td><td id="r4c"></td><td id="r4a"></td></tr>
-            <tr class="total"><td>Total year-one recovery</td><td id="totalC"></td><td id="totalA"></td></tr>
-          </tbody>
-        </table>
+        <div class="roi-property-sub" style="margin-bottom:28px;">Here's what your time is actually worth — and what you're spending it on.</div>
+
+        <!-- INSIGHT CARDS -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:32px;" id="insightCards"></div>
+
+        <!-- HONEST COMPARISON -->
+        <div style="background:var(--ocean-pale);border:1px solid rgba(13,92,99,0.15);border-radius:16px;padding:28px;margin-bottom:24px;">
+          <div style="font-size:12px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--ocean);margin-bottom:16px;">The honest comparison</div>
+          <table class="roi-table" style="margin-bottom:0;">
+            <thead>
+              <tr>
+                <th>What you're comparing</th>
+                <th style="text-align:right;">Your situation</th>
+                <th style="text-align:right;">With Lani</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Hours/year on messaging</td><td id="cmp-hours-you" style="text-align:right;font-weight:500;color:var(--charcoal);"></td><td id="cmp-hours-lani" style="text-align:right;font-weight:500;color:var(--ocean);">~0</td></tr>
+              <tr><td>Cost of your time on messaging</td><td id="cmp-cost-you" style="text-align:right;font-weight:500;color:var(--charcoal);"></td><td id="cmp-cost-lani" style="text-align:right;font-weight:500;color:var(--ocean);"></td></tr>
+              <tr><td>Messages answered after hours</td><td id="cmp-late-you" style="text-align:right;font-weight:500;color:var(--charcoal);">Many, next day</td><td id="cmp-late-lani" style="text-align:right;font-weight:500;color:var(--ocean);">All, instantly</td></tr>
+              <tr class="total"><td>Your time freed up per year</td><td></td><td id="cmp-freed" style="text-align:right;color:var(--ocean);"></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div style="font-size:12px;color:var(--warm-gray-lt);margin-bottom:24px;font-style:italic;line-height:1.7;" id="roiDisclaimer"></div>
+
         <div class="roi-graph-wrap">
-          <div class="roi-graph-title">Investment vs. Revenue — break-even point <span style="color:var(--ocean);font-style:italic">(based on conservative estimates)</span></div>
+          <div class="roi-graph-title">Your time cost vs. Lani's annual cost — month by month</div>
           <canvas id="roiChart" height="200"></canvas>
         </div>
-        <div class="roi-pricing">
-          <p>$2,500 to get started. $500 a month after that.</p>
-          <small>Most operators are in profit within 60 days.</small>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:28px;">
+          <a href="https://propertyknowledgebase.netlify.app/" target="_blank" class="btn-primary" style="justify-content:center;font-size:14px;">Set up my demo →</a>
+          <a href="https://wa.me/16822975011?text=Hi!%20I%20want%20to%20try%20the%20Lani%20demo." target="_blank" style="display:flex;align-items:center;justify-content:center;gap:8px;border:1.5px solid var(--ocean);color:var(--ocean);border-radius:50px;padding:14px 24px;font-size:14px;font-weight:500;text-decoration:none;font-family:'DM Sans',sans-serif;transition:all 0.2s;" onmouseover="this.style.background='var(--ocean)';this.style.color='white'" onmouseout="this.style.background='transparent';this.style.color='var(--ocean)'">Message us on WhatsApp</a>
         </div>
-        <div class="roi-guarantee">60-Day Money Back Guarantee</div>
-        <button class="btn-community" onclick="alert('Community view coming soon — this will show live anonymized results from all Lani clients.')">
-          See what the community is recovering →
-        </button>
       </div>
     </div>
   </div>
@@ -746,7 +931,77 @@
   <span class="cultural-meaning">We are in this together</span>
 </div>
 
-<!-- INVITATION -->
+<!-- HOW IT WORKS -->
+<section id="how-it-works" class="how-section">
+  <div class="how-inner">
+    <div class="section-eyebrow fade-in">How it works</div>
+    <h2 class="section-headline fade-in">Three steps.<br><em>Then Lani does the rest.</em></h2>
+
+    <div class="how-steps fade-in">
+      <div class="how-step">
+        <div class="how-step-num">1</div>
+        <div class="how-step-title">Tell Lani about your property</div>
+        <div class="how-step-desc">Fill in a short form with details about your rooms, rates, check-in rules, and anything guests usually ask. Takes about 5 minutes.</div>
+      </div>
+      <div class="how-step">
+        <div class="how-step-num active-step">2</div>
+        <div class="how-step-title">Lani learns your voice</div>
+        <div class="how-step-desc">Your information is loaded into Lani's knowledge base. She learns how to answer as if she were your front desk — in your tone, with your details.</div>
+      </div>
+      <div class="how-step">
+        <div class="how-step-num">3</div>
+        <div class="how-step-title">Guests get answered — always</div>
+        <div class="how-step-desc">From that moment on, every WhatsApp inquiry gets an instant, accurate response. Day or night. While you sleep, surf, or serve other guests.</div>
+      </div>
+    </div>
+
+    <div class="how-demo-box fade-in">
+      <div class="how-demo-text">
+        <span class="demo-label">Live demo — try it yourself</span>
+        <h3>See Lani respond as your property — in minutes.</h3>
+        <p>Fill in your property details and we'll set up a live WhatsApp demo personalized to your business. No setup fee. No commitment. Just Lani, responding as if she already works for you.</p>
+        <div class="how-demo-steps">
+          <div class="how-demo-step">
+            <div class="how-demo-step-n">1</div>
+            <div class="how-demo-step-txt"><strong>Fill in your property form</strong> — takes about 5 minutes</div>
+          </div>
+          <div class="how-demo-step">
+            <div class="how-demo-step-n">2</div>
+            <div class="how-demo-step-txt"><strong>Open WhatsApp</strong> and message the demo number we give you</div>
+          </div>
+          <div class="how-demo-step">
+            <div class="how-demo-step-n">3</div>
+            <div class="how-demo-step-txt"><strong>Ask anything</strong> — availability, rates, check-in time, directions — watch Lani respond as your property</div>
+          </div>
+        </div>
+        <a href="https://propertyknowledgebase.netlify.app/" target="_blank" class="btn-demo-primary">Start the free demo →</a>
+      </div>
+      <div class="how-demo-visual">
+        <div class="demo-chat-label">Live demo preview</div>
+        <div class="demo-msg">
+          <div class="demo-msg-name">Guest</div>
+          <div class="demo-msg-guest">Hi, do you have a room for April 25–28?</div>
+        </div>
+        <div class="demo-msg">
+          <div class="demo-msg-name">Lani — your property</div>
+          <div class="demo-msg-lani">Hi! Yes — we have availability for those dates. Our Deluxe Room is $120/night including breakfast. Would you like me to send you the booking link? 🌊</div>
+        </div>
+        <div class="demo-msg">
+          <div class="demo-msg-guest">What time is check-in?</div>
+        </div>
+        <div class="demo-msg">
+          <div class="demo-msg-lani">Check-in is from 2:00 PM. Early check-in available on request — just let me know your arrival time! 😊</div>
+        </div>
+        <div class="demo-number-box">
+          <div class="demo-number-label">After the form — message this number</div>
+          <div class="demo-number-val">+1 (682) 297-5011</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
 <section id="invite" class="alt">
   <div class="section-eyebrow fade-in">The invitation</div>
   <h2 class="section-headline fade-in">Two open doors.<br><em>No pressure. No urgency.</em></h2>
@@ -755,66 +1010,26 @@
     <div class="door fade-in">
       <div class="door-number">01</div>
       <div class="door-question">Ready to put Lani to work for you?</div>
-      <div class="door-desc">Choose how you'd like to get started — both paths lead to the same place.</div>
+      <div class="door-desc">Fill in your property details and get a live demo on WhatsApp — in your own voice, answering your real questions. Takes about 5 minutes.</div>
 
       <div style="background:var(--cream);border:1px solid var(--border-soft);border-radius:16px;padding:22px;margin-bottom:12px;">
-        <div style="font-size:14px;font-weight:500;color:var(--charcoal);margin-bottom:6px;">Start online — takes about 5 minutes</div>
-        <div style="font-size:14px;font-weight:300;color:var(--warm-gray);margin-bottom:16px;line-height:1.6;">Fill in a few details about your property and Lani gets to work. No calls, no waiting.</div>
-        <a href="#onboarding-form" class="door-btn" style="margin-bottom:0;" onclick="toggleOnboarding(event)">Get started online →</a>
+        <div style="font-size:14px;font-weight:500;color:var(--charcoal);margin-bottom:6px;">Start with the demo</div>
+        <div style="font-size:14px;font-weight:300;color:var(--warm-gray);margin-bottom:16px;line-height:1.6;">Tell Lani about your property — rooms, rates, policies, personality. The more detail, the better she sounds. Then message her on WhatsApp and see for yourself.</div>
+        <a href="https://propertyknowledgebase.netlify.app/" target="_blank" class="door-btn primary">Set up my demo →</a>
       </div>
 
       <div style="background:var(--cream);border:1px solid var(--border-soft);border-radius:16px;padding:22px;">
         <div style="font-size:14px;font-weight:500;color:var(--charcoal);margin-bottom:6px;">Prefer to talk first?</div>
         <div style="font-size:14px;font-weight:300;color:var(--warm-gray);margin-bottom:16px;line-height:1.6;">Start a WhatsApp conversation with your local ambassador. No forms. No sales pitch.</div>
-        <a href="https://wa.me/1234567890?text=Hello%2C%20I%20want%20to%20learn%20about%20Lani" class="door-btn primary" target="_blank">Open WhatsApp →</a>
-      </div>
-
-      <div id="onboarding-form" style="display:none;margin-top:20px;">
-        <div style="border-top:1px solid var(--border-soft);padding-top:20px;">
-          <div style="font-size:14px;font-weight:500;color:var(--charcoal);margin-bottom:16px;">Tell us about your property</div>
-          <div style="margin-bottom:12px;">
-            <label style="font-size:11px;color:var(--warm-gray);letter-spacing:0.06em;text-transform:uppercase;display:block;margin-bottom:5px;">Property name</label>
-            <input class="roi-input" id="ob-name" type="text" placeholder="e.g. Surfside 6">
-          </div>
-          <div style="margin-bottom:12px;">
-            <label style="font-size:11px;color:var(--warm-gray);letter-spacing:0.06em;text-transform:uppercase;display:block;margin-bottom:5px;">Location (city, island)</label>
-            <input class="roi-input" id="ob-location" type="text" placeholder="e.g. El Nido, Palawan">
-          </div>
-          <div style="margin-bottom:12px;">
-            <label style="font-size:11px;color:var(--warm-gray);letter-spacing:0.06em;text-transform:uppercase;display:block;margin-bottom:5px;">Type of business</label>
-            <input class="roi-input" id="ob-type" type="text" placeholder="e.g. Boutique hotel, surf camp, dive shop…">
-          </div>
-          <div style="margin-bottom:12px;">
-            <label style="font-size:11px;color:var(--warm-gray);letter-spacing:0.06em;text-transform:uppercase;display:block;margin-bottom:5px;">Your WhatsApp number</label>
-            <input class="roi-input" id="ob-whatsapp" type="tel" placeholder="+63 XXX XXX XXXX">
-          </div>
-          <div style="margin-bottom:20px;">
-            <label style="font-size:11px;color:var(--warm-gray);letter-spacing:0.06em;text-transform:uppercase;display:block;margin-bottom:5px;">Your email</label>
-            <input class="roi-input" id="ob-email" type="email" placeholder="you@yourbusiness.com">
-          </div>
-          <div id="ob-payment-choice" style="display:none;">
-            <div style="background:var(--ocean-pale);border:1px solid rgba(13,92,99,0.15);border-radius:14px;padding:20px;margin-bottom:16px;">
-              <div style="font-size:14px;font-weight:500;color:var(--ocean);margin-bottom:4px;">Ready to get started?</div>
-              <div style="font-size:13px;color:var(--warm-gray);margin-bottom:16px;line-height:1.6;">One-time setup fee. Your $500/month subscription begins after activation.</div>
-              <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-                <button onclick="goToStripe()" class="btn-primary" style="font-size:14px;padding:12px 24px;">Pay now — $2,500 →</button>
-                <button onclick="submitWithoutPay()" style="background:none;border:none;font-size:13px;color:var(--warm-gray);cursor:pointer;text-decoration:underline;padding:4px;">I'll pay later</button>
-              </div>
-            </div>
-          </div>
-          <div id="ob-submit-wrap">
-            <button class="btn-primary" style="width:100%;font-size:14px;justify-content:center;" onclick="submitOnboarding()">Continue →</button>
-          </div>
-          <p style="font-size:12px;color:var(--warm-gray-lt);text-align:center;margin-top:12px;">No commitment yet — we confirm everything with you first.</p>
-        </div>
+        <a href="https://wa.me/16822975011?text=Hello%2C%20I%20want%20to%20learn%20about%20Lani" class="door-btn" target="_blank">Open WhatsApp →</a>
       </div>
     </div>
 
     <div class="door fade-in">
       <div class="door-number">02</div>
       <div class="door-question">Want to bring Lani to your community?</div>
-      <div class="door-desc">Tap to learn about the ambassador role and tell us a little about yourself.</div>
-      <a href="#ambassador-form" class="door-btn">Learn about the ambassador role →</a>
+      <div class="door-desc">Become a Lani ambassador. Share with an operator who joins — and we thank you with a free month. Tell us about yourself and the community you want to reach.</div>
+      <a href="#ambassador-form" class="door-btn" onclick="toggleAmbassador(event)">Learn about the ambassador role →</a>
     </div>
 
   </div>
@@ -824,21 +1039,21 @@
       <h3 style="font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:600;color:var(--charcoal);margin-bottom:22px;">Tell us about yourself</h3>
       <div style="margin-bottom:16px;">
         <label style="font-size:11px;color:var(--warm-gray);letter-spacing:0.06em;text-transform:uppercase;display:block;margin-bottom:6px;">Your name</label>
-        <input class="roi-input" type="text" placeholder="Your full name">
+        <input class="roi-input" type="text" placeholder="Your full name" id="amb-name">
       </div>
       <div style="margin-bottom:16px;">
         <label style="font-size:11px;color:var(--warm-gray);letter-spacing:0.06em;text-transform:uppercase;display:block;margin-bottom:6px;">Your location in the Philippines</label>
-        <input class="roi-input" type="text" placeholder="City, region">
+        <input class="roi-input" type="text" placeholder="City, region" id="amb-location">
       </div>
       <div style="margin-bottom:16px;">
         <label style="font-size:11px;color:var(--warm-gray);letter-spacing:0.06em;text-transform:uppercase;display:block;margin-bottom:6px;">Your WhatsApp number</label>
-        <input class="roi-input" type="tel" placeholder="+63 XXX XXX XXXX">
+        <input class="roi-input" type="tel" placeholder="+63 XXX XXX XXXX" id="amb-wa">
       </div>
       <div style="margin-bottom:24px;">
         <label style="font-size:11px;color:var(--warm-gray);letter-spacing:0.06em;text-transform:uppercase;display:block;margin-bottom:6px;">Tell us about the community you want to bring Lani to</label>
-        <textarea class="roi-input" rows="4" style="resize:vertical" placeholder="What kind of operators do you know? What area?"></textarea>
+        <textarea class="roi-input" rows="4" style="resize:vertical" placeholder="What kind of operators do you know? What area?" id="amb-community"></textarea>
       </div>
-      <button class="btn-primary" style="width:100%;justify-content:center;" onclick="alert('Thank you — we\'ll be in touch via WhatsApp shortly.')">Send →</button>
+      <button class="btn-primary" style="width:100%;justify-content:center;" onclick="submitAmbassador()">Send →</button>
     </div>
   </div>
 </section>
@@ -880,6 +1095,64 @@
   </div>
 </section>
 
+<!-- SCOUT -->
+<section id="scout" class="scout-section">
+  <div class="scout-inner">
+    <div class="scout-eyebrow fade-in">WhyNotAutomate</div>
+    <div class="scout-name-display fade-in"><em>Scout</em></div>
+    <div class="scout-tagline fade-in">Business Prospector · Find leads before your competition does</div>
+    <div class="scout-grid">
+      <div class="fade-in">
+        <p class="scout-subhead">Find your next client<br>before they find you.</p>
+        <p class="scout-body">SCOUT scans Google Maps for independent businesses — hotels, restaurants, dive shops, surf camps — that don't have a real web presence. It surfaces them as qualified leads, sorted by opportunity, ready for outreach.</p>
+        <div class="scout-features">
+          <div class="scout-feature">
+            <div class="scout-feature-dot"></div>
+            <div class="scout-feature-text"><strong>Scans any city or region</strong> for businesses without a website</div>
+          </div>
+          <div class="scout-feature">
+            <div class="scout-feature-dot"></div>
+            <div class="scout-feature-text"><strong>Tags new businesses</strong> automatically — no duplicates, ever</div>
+          </div>
+          <div class="scout-feature">
+            <div class="scout-feature-dot"></div>
+            <div class="scout-feature-text"><strong>Built for ambassadors</strong> who want to bring Lani to their community</div>
+          </div>
+          <div class="scout-feature">
+            <div class="scout-feature-dot"></div>
+            <div class="scout-feature-text"><strong>Exports to Google Sheets</strong> — sorted, deduplicated, ready to contact</div>
+          </div>
+        </div>
+        <a href="https://scoutbylani.netlify.app/" target="_blank" class="btn-scout">Try SCOUT →</a>
+      </div>
+      <div class="scout-mockup fade-in">
+        <div class="scout-mockup-header">
+          <div class="scout-mockup-logo">scout</div>
+          <div class="scout-mockup-by">by lani</div>
+          <div class="scout-mockup-status"><span style="width:6px;height:6px;border-radius:50%;background:#4ADE80;display:inline-block;"></span> Scan complete</div>
+        </div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.2);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:14px;">General Luna, Siargao · 14 results</div>
+        <div class="scout-result">
+          <div class="scout-result-name">Ocean Wave Surf School</div>
+          <div class="scout-result-meta">4.8 ★ · No website detected · WhatsApp only</div>
+          <span class="scout-result-badge badge-opportunity">High opportunity</span>
+        </div>
+        <div class="scout-result">
+          <div class="scout-result-name">Blue Lagoon Guesthouse</div>
+          <div class="scout-result-meta">4.6 ★ · Facebook page only · 12 reviews</div>
+          <span class="scout-result-badge badge-opportunity">High opportunity</span>
+        </div>
+        <div class="scout-result">
+          <div class="scout-result-name">Coral Dive Center</div>
+          <div class="scout-result-meta">4.9 ★ · No website · New business</div>
+          <span class="scout-result-badge badge-new">New · just opened</span>
+        </div>
+        <div style="text-align:center;margin-top:18px;font-size:12px;color:rgba(255,255,255,0.18);">+ 11 more leads ready for outreach</div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- FOOTER -->
 <footer>
   <div>
@@ -887,79 +1160,103 @@
     <div class="footer-note">Serving independent operators across the Philippines · lani.ph</div>
   </div>
   <ul class="footer-links">
-    <li><a href="#meet">About Lani</a></li>
-    <li><a href="#community">Community</a></li>
+    <li><a href="#how-it-works">How it works</a></li>
+    <li><a href="#calculator">Your numbers</a></li>
+    <li><a href="#scout">SCOUT</a></li>
     <li><a href="#pricing">Pricing</a></li>
+    <li><a href="#invite">Get started</a></li>
   </ul>
 </footer>
 
-<!-- STRIPE -->
-<script src="https://js.stripe.com/v3/"></script>
 <!-- CHART.JS -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 
 <script>
-/* ── STRIPE CONFIG ── */
-const STRIPE_PK = 'pk_test_51THVzm3pnzqEq9viViNdOYpGwO4ElCDXIsKabpBX6L0m6Vfe3eSPr8hDNRfKYT4ElID0FxhYTkhamDvBwcSQfrZF00mlNGbRfM';
-const PRICE_ID  = 'price_1TKLcg3pnzqEq9vil2e5b5D0';
-const stripe = Stripe(STRIPE_PK);
-
-let onboardingData = {};
-
-function submitOnboarding() {
-  const name     = document.getElementById('ob-name').value.trim();
-  const location = document.getElementById('ob-location').value.trim();
-  const type     = document.getElementById('ob-type').value.trim();
-  const whatsapp = document.getElementById('ob-whatsapp').value.trim();
-  const email    = document.getElementById('ob-email').value.trim();
-  if (!name || !whatsapp || !email) {
-    alert('Please fill in at least your property name, WhatsApp number, and email.');
-    return;
+/* ── AMBASSADOR FORM TOGGLE ── */
+function toggleAmbassador(e) {
+  e.preventDefault();
+  const form = document.getElementById('ambassador-form');
+  form.style.display = form.style.display === 'none' ? 'block' : 'none';
+  if (form.style.display === 'block') {
+    setTimeout(() => form.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
   }
-  onboardingData = { name, location, type, whatsapp, email };
-  document.getElementById('ob-submit-wrap').style.display = 'none';
-  document.getElementById('ob-payment-choice').style.display = 'block';
-  document.getElementById('ob-payment-choice').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
-function goToStripe() {
-  const name  = encodeURIComponent(onboardingData.name || '');
-  const email = encodeURIComponent(onboardingData.email || '');
-  const url   = 'https://buy.stripe.com/test_9B65kwc1KbR57CadFl6Vq00'
-              + '?prefilled_email=' + email
-              + '&client_reference_id=' + name;
-  window.open(url, '_blank');
-}
-
-function submitWithoutPay() {
-  document.getElementById('ob-payment-choice').innerHTML =
-    '<div style="background:var(--ocean-pale);border:1px solid rgba(13,92,99,0.2);border-radius:14px;padding:20px;text-align:center;">' +
-    '<div style="font-size:16px;font-weight:600;color:var(--ocean);margin-bottom:6px;">You\'re on the list ✓</div>' +
-    '<div style="font-size:14px;color:var(--warm-gray);line-height:1.6;">We\'ll be in touch via WhatsApp within one business day to confirm everything and get Lani set up for you.</div>' +
+function submitAmbassador() {
+  const name = document.getElementById('amb-name').value.trim();
+  const wa   = document.getElementById('amb-wa').value.trim();
+  if (!name || !wa) { alert('Please fill in your name and WhatsApp number.'); return; }
+  document.getElementById('ambassador-form').innerHTML =
+    '<div style="background:var(--ocean-pale);border:1px solid rgba(13,92,99,0.2);border-radius:20px;padding:36px;text-align:center;">' +
+    '<div style="font-size:18px;font-weight:600;color:var(--ocean);margin-bottom:8px;">You\'re on the list ✓</div>' +
+    '<div style="font-size:15px;color:var(--warm-gray);line-height:1.7;">We\'ll reach out to you via WhatsApp shortly to talk about the ambassador role.</div>' +
     '</div>';
 }
 
-/* ── PAYMENT SUCCESS BANNER ── */
-window.addEventListener('DOMContentLoaded', () => {
-  const params = new URLSearchParams(window.location.search);
-  if (params.get('payment') === 'success') {
-    const name = params.get('name') || 'your property';
-    const banner = document.createElement('div');
-    banner.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);background:var(--ocean-pale);border:1px solid rgba(13,92,99,0.2);border-radius:14px;padding:18px 28px;z-index:999;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,0.08);max-width:90vw;';
-    banner.innerHTML = '<strong style="color:var(--ocean)">Payment received — welcome to Lani!</strong><br><span style="font-size:13px;color:var(--ocean)">We\'ll reach out to ' + name + ' within one business day.</span>';
-    document.body.appendChild(banner);
-    setTimeout(() => banner.remove(), 8000);
-  }
-});
+/* ── CURRENCY TOGGLE ── */
+let currency = 'USD';
+const PHP_RATE = 56; // 1 USD ≈ 56 PHP
 
-/* ── ROI CALCULATOR LOGIC ── */
+function setCurrency(c) {
+  currency = c;
+  document.getElementById('btnUSD').style.background = c === 'USD' ? 'var(--ocean)' : 'transparent';
+  document.getElementById('btnUSD').style.color = c === 'USD' ? 'white' : 'var(--warm-gray)';
+  document.getElementById('btnPHP').style.background = c === 'PHP' ? 'var(--ocean)' : 'transparent';
+  document.getElementById('btnPHP').style.color = c === 'PHP' ? 'white' : 'var(--warm-gray)';
+  // Update the rate hint if we're on that question
+  if (questions[step] && questions[step].key === 'rate') {
+    document.getElementById('questionHint').textContent =
+      c === 'PHP'
+        ? 'En pesos filipinos (PHP). Si eres dueño, piensa cuánto vale tu hora de trabajo.'
+        : 'In US dollars. If you\'re an owner-operator, think about what your time is worth per hour.';
+    document.getElementById('roiInput').placeholder = c === 'PHP' ? 'e.g. 1,400' : 'e.g. 25';
+  }
+}
+
+function fmtMoney(usdAmount) {
+  if (currency === 'PHP') {
+    const php = Math.round(usdAmount * PHP_RATE);
+    return '₱' + php.toLocaleString();
+  }
+  return '$' + Math.round(usdAmount).toLocaleString();
+}
+
+function laniLabel() {
+  return currency === 'PHP'
+    ? `₱${(500 * PHP_RATE).toLocaleString()}/mo · ₱${(6000 * PHP_RATE).toLocaleString()}/yr`
+    : '$500/mo · $6,000/yr';
+}
+
+/* ── ROI CALCULATOR LOGIC (Opción B — costo real de tu tiempo) ── */
 const questions = [
-  { text: '"How many rooms do you have?"',            hint: 'Enter the total number of rooms, suites or units.',        key: 'rooms',     type: 'number', placeholder: 'e.g. 12' },
-  { text: '"What is your average nightly rate?"',     hint: 'In US dollars.',                                           key: 'rate',      type: 'number', placeholder: 'e.g. 85' },
-  { text: '"Roughly what is your occupancy rate?"',   hint: 'Percentage of rooms filled on a typical night (0–100).',   key: 'occupancy', type: 'number', placeholder: 'e.g. 65' },
-  { text: '"How do most guests find you?"',           hint: 'Booking platforms, direct, or a mix.',                     key: 'source',    type: 'text',   placeholder: 'e.g. Mostly Booking.com, some direct' },
-  { text: '"Do you respond to inquiries on WhatsApp or Messenger?"', hint: 'Yes, sometimes, or not at all.',           key: 'messaging', type: 'text',   placeholder: 'e.g. Sometimes, but not always' },
-  { text: '"What is your property name?"',            hint: 'This will appear at the top of your results.',             key: 'name',      type: 'text',   placeholder: 'e.g. Surfside 6' },
+  {
+    text: '"How many guest messages do you get per day on average?"',
+    hint: 'WhatsApp, Messenger, email — all channels. A rough estimate is fine.',
+    key: 'msgs', type: 'number', placeholder: 'e.g. 15'
+  },
+  {
+    text: '"How many minutes does it take you to respond to each one?"',
+    hint: 'Include reading, thinking, typing, and following up.',
+    key: 'mins', type: 'number', placeholder: 'e.g. 5'
+  },
+  {
+    text: '"What percentage of messages arrive outside your working hours?"',
+    hint: 'Evenings, nights, early mornings. Most operators say 30–50%.',
+    key: 'offhours', type: 'number', placeholder: 'e.g. 40'
+  },
+  {
+    text: '"What is your hourly rate — or what do you charge for your time?"',
+    hint: currency === 'PHP'
+      ? 'En pesos filipinos (PHP). Si eres dueño, piensa cuánto vale tu hora de trabajo.'
+      : 'In USD. If you\'re an owner-operator, think about what your time is worth per hour.',
+    key: 'rate', type: 'number',
+    get placeholder() { return currency === 'PHP' ? 'e.g. 1,400' : 'e.g. 25'; }
+  },
+  {
+    text: '"What is your property name?"',
+    hint: 'This will appear at the top of your results.',
+    key: 'name', type: 'text', placeholder: 'e.g. Surfside 6'
+  },
 ];
 
 let step = 0;
@@ -968,8 +1265,9 @@ let recognition = null;
 let isListening = false;
 
 function updateProgress() {
-  for (let i = 0; i < 6; i++) {
+  for (let i = 0; i < 5; i++) {
     const el = document.getElementById('s' + (i + 1));
+    if (!el) continue;
     if (i < step) { el.className = 'roi-step done'; }
     else if (i === step) { el.className = 'roi-step active'; }
     else { el.className = 'roi-step'; }
@@ -1033,61 +1331,127 @@ function toggleMic() {
   recognition.start();
 }
 
-function fmt(n) { return '$' + Math.round(n).toLocaleString(); }
+function fmtUSD(n) { return fmtMoney(n); }  // alias — todos los valores pasan por fmtMoney
+function fmtHrs(n) { return Math.round(n).toLocaleString() + ' hrs'; }
 function toTitleCase(str) { return str.replace(/\w\S*/g, t => t.charAt(0).toUpperCase() + t.slice(1).toLowerCase()); }
 
 function showResults() {
-  const rooms = parseFloat(answers.rooms) || 10;
-  const rate  = parseFloat(answers.rate)  || 80;
-  const rawOcc = answers.occupancy || '65';
-  const occ = parseFloat(rawOcc.toString().replace('%','')) / 100 || 0.65;
-  const annualRevenue = rooms * rate * 365 * occ;
-  const r1c = annualRevenue * 0.08, r1a = annualRevenue * 0.16;
-  const r2c = annualRevenue * 0.045, r2a = annualRevenue * 0.08;
-  const r3c = annualRevenue * 0.035, r3a = annualRevenue * 0.035;
-  const r4c = annualRevenue * 0.022, r4a = annualRevenue * 0.045;
-  const tc = r1c + r2c + r3c + r4c;
-  const ta = r1a + r2a + r3a + r4a;
+  const msgsPerDay  = parseFloat(answers.msgs)     || 15;
+  const minsPerMsg  = parseFloat(answers.mins)      || 5;
+  const offPct      = parseFloat(answers.offhours)  / 100 || 0.40;
+  const rateRaw     = parseFloat(answers.rate)      || (currency === 'PHP' ? 1120 : 20);
   const propertyName = toTitleCase(answers.name || 'Your Property');
+
+  // Normalizar tarifa a USD para cálculos internos
+  const rateUSD = currency === 'PHP' ? rateRaw / PHP_RATE : rateRaw;
+
+  // Core calculations — derivadas directamente de lo que el usuario ingresó
+  const hoursPerDay   = (msgsPerDay * minsPerMsg) / 60;
+  const hoursPerYear  = hoursPerDay * 365;
+  const costPerYearUSD   = hoursPerYear * rateUSD;
+  const laniCostYearUSD  = 500 * 12; // $6,000/yr USD
+  const offHourMsgs   = Math.round(msgsPerDay * offPct * 365);
+
+  const netSavings = costPerYearUSD - laniCostYearUSD;
+
+  // Función de formato según moneda activa
+  const fmt = (usd) => fmtMoney(usd);
+  const rateDisplay = currency === 'PHP' ? `₱${Math.round(rateRaw).toLocaleString()}` : `$${Math.round(rateRaw)}`;
+
   document.getElementById('propertyName').textContent = propertyName;
-  document.getElementById('r1c').textContent = fmt(r1c);
-  document.getElementById('r1a').textContent = fmt(r1a);
-  document.getElementById('r2c').textContent = fmt(r2c);
-  document.getElementById('r2a').textContent = fmt(r2a);
-  document.getElementById('r3c').textContent = fmt(r3c);
-  document.getElementById('r3a').textContent = fmt(r3a);
-  document.getElementById('r4c').textContent = fmt(r4c);
-  document.getElementById('r4a').textContent = fmt(r4a);
-  document.getElementById('totalC').textContent = fmt(tc);
-  document.getElementById('totalA').textContent = fmt(ta);
+
+  // INSIGHT CARDS
+  const cards = [
+    {
+      value: fmtHrs(hoursPerYear),
+      label: 'Hours per year answering messages',
+      note: `${Math.round(hoursPerDay * 10) / 10} hrs/day × 365 days`
+    },
+    {
+      value: fmt(costPerYearUSD),
+      label: 'What that time costs you annually',
+      note: `${fmtHrs(hoursPerYear)} × ${rateDisplay}/hr`
+    },
+    {
+      value: offHourMsgs.toLocaleString(),
+      label: 'Messages arriving outside your hours/yr',
+      note: `${Math.round(offPct * 100)}% of messages — answered next day`
+    },
+    {
+      value: fmt(laniCostYearUSD),
+      label: "Lani's full annual cost",
+      note: currency === 'PHP'
+        ? `₱${(500 * PHP_RATE).toLocaleString()}/mo · 24/7 · all messages`
+        : '$500/month · 24/7 coverage · all messages'
+    },
+  ];
+  document.getElementById('insightCards').innerHTML = cards.map(c => `
+    <div style="background:var(--cream);border:1px solid var(--border);border-radius:16px;padding:20px;">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:600;color:var(--ocean);line-height:1;margin-bottom:6px;">${c.value}</div>
+      <div style="font-size:13px;font-weight:500;color:var(--charcoal);margin-bottom:4px;line-height:1.4;">${c.label}</div>
+      <div style="font-size:11px;color:var(--warm-gray-lt);">${c.note}</div>
+    </div>
+  `).join('');
+
+  // COMPARISON TABLE
+  document.getElementById('cmp-hours-you').textContent  = fmtHrs(hoursPerYear);
+  document.getElementById('cmp-cost-you').textContent   = fmt(costPerYearUSD);
+  document.getElementById('cmp-cost-lani').textContent  = fmt(laniCostYearUSD) + '/yr';
+  document.getElementById('cmp-freed').textContent      = fmtHrs(hoursPerYear) + ' back';
+
+  // DISCLAIMER
+  const disclaimerEl = document.getElementById('roiDisclaimer');
+  if (netSavings > 0) {
+    disclaimerEl.textContent = `If your time is worth ${rateDisplay}/hr, the time you spend on messages alone costs more than Lani. These numbers come directly from what you told us — no assumptions added.`;
+  } else {
+    disclaimerEl.textContent = `At ${rateDisplay}/hr and ${Math.round(hoursPerDay * 10)/10} hrs/day on messages, Lani costs about the same as your time. But it also covers nights and weekends — which your time doesn't. Numbers based on what you told us.`;
+  }
+
   document.getElementById('roiQuestions').style.display = 'none';
   document.getElementById('progressBar').style.display = 'none';
   document.getElementById('roiResults').style.display = 'block';
 
+  // CHART — costo de tu tiempo vs costo de Lani, mes a mes (en moneda activa)
   const months = 12;
-  const invest = 2500;
-  const monthly = 500;
-  const labels = ['Start', ...Array.from({length: months}, (_, i) => 'M' + (i + 1))];
-  const investLine = [invest, ...Array.from({length: months}, (_, i) => invest + monthly * (i + 1))];
-  const revLine = [0, ...Array.from({length: months}, (_, i) => (tc / 12) * (i + 1))];
+  const labels = Array.from({length: months}, (_, i) => 'M' + (i + 1));
+  const yourTimeCost = Array.from({length: months}, (_, i) => {
+    const usd = (costPerYearUSD / 12) * (i + 1);
+    return currency === 'PHP' ? usd * PHP_RATE : usd;
+  });
+  const laniTotal = Array.from({length: months}, (_, i) => {
+    const usd = 500 * (i + 1);
+    return currency === 'PHP' ? usd * PHP_RATE : usd;
+  });
+
   new Chart(document.getElementById('roiChart'), {
     type: 'line',
     data: {
       labels,
       datasets: [
-        { label: 'Cumulative revenue recovery', data: revLine, borderColor: '#0D5C63', backgroundColor: 'rgba(13,92,99,0.07)', tension: 0.4, fill: true, pointRadius: 3 },
-        { label: 'Investment (setup + monthly)', data: investLine, borderColor: '#C9933A', borderDash: [6, 4], tension: 0.4, fill: false, pointRadius: 2 },
+        {
+          label: 'Your time cost on messaging',
+          data: yourTimeCost,
+          borderColor: '#C9933A',
+          backgroundColor: 'rgba(201,147,58,0.07)',
+          tension: 0.4, fill: true, pointRadius: 3
+        },
+        {
+          label: 'Lani total cost',
+          data: laniTotal,
+          borderColor: '#0D5C63',
+          borderDash: [6, 4],
+          tension: 0.4, fill: false, pointRadius: 2
+        },
       ]
     },
     options: {
       responsive: true,
       plugins: {
         legend: { labels: { font: { family: 'DM Sans', size: 12 }, color: '#6B6560' } },
-        tooltip: { callbacks: { label: ctx => ' ' + fmt(ctx.raw) } },
-        annotation: {}
+        tooltip: { callbacks: { label: ctx => ' ' + fmtMoney(currency === 'PHP' ? ctx.raw / PHP_RATE : ctx.raw) } },
       },
       scales: {
-        y: { ticks: { callback: v => '$' + Math.round(v / 1000) + 'k', color: '#A09890', font: { size: 11 } }, grid: { color: 'rgba(13,92,99,0.06)' } },
+        y: { ticks: { callback: v => (currency === 'PHP' ? '₱' : '$') + Math.round(v / 1000) + 'k', color: '#A09890', font: { size: 11 } }, grid: { color: 'rgba(13,92,99,0.06)' } },
         x: { ticks: { color: '#A09890', font: { size: 11 } }, grid: { display: false } }
       }
     }
@@ -1097,20 +1461,15 @@ function showResults() {
 /* ── ONBOARDING FORM TOGGLE ── */
 function toggleOnboarding(e) {
   e.preventDefault();
-  const form = document.getElementById('onboarding-form');
-  form.style.display = form.style.display === 'none' ? 'block' : 'none';
-  if (form.style.display === 'block') {
-    setTimeout(() => form.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
-  }
 }
 
-/* ── AMBASSADOR FORM TOGGLE ── */
-document.querySelector('a[href="#ambassador-form"]').addEventListener('click', function(e) {
-  e.preventDefault();
-  const form = document.getElementById('ambassador-form');
-  form.style.display = form.style.display === 'none' ? 'block' : 'none';
-  if (form.style.display === 'block') {
-    setTimeout(() => form.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+/* ── AMBASSADOR FORM TOGGLE (event listener version) ── */
+document.addEventListener('DOMContentLoaded', () => {
+  const ambLink = document.querySelector('a[href="#ambassador-form"]');
+  if (ambLink) {
+    ambLink.addEventListener('click', function(e) {
+      toggleAmbassador(e);
+    });
   }
 });
 
