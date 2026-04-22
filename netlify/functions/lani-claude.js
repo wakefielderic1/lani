@@ -248,6 +248,31 @@ function buildSelectionMessage(propertiesList, filterLocation) {
 }
 
 
+// ─────────────────────────────────────────────────────────────
+// LIMPIEZA DE MARKDOWN PARA WHATSAPP
+// Claude usa markdown estándar, WhatsApp tiene su propio formato
+// ─────────────────────────────────────────────────────────────
+function formatForWhatsApp(text) {
+  return text
+    // **negrita** → *negrita* (WhatsApp bold)
+    .replace(/\*\*(.+?)\*\*/g, '*$1*')
+    // ### Encabezados → solo texto en mayúsculas
+    .replace(/#{1,6}\s+(.+)/g, '*$1*')
+    // ~~tachado~~ → eliminar
+    .replace(/~~(.+?)~~/g, '$1')
+    // `código inline` → eliminar backticks
+    .replace(/`(.+?)`/g, '$1')
+    // Bloques de código ```...``` → eliminar
+    .replace(/```[\s\S]*?```/g, '')
+    // [texto](url) → texto: url
+    .replace(/\[(.+?)\]\((.+?)\)/g, '$1: $2')
+    // Limpiar líneas con solo espacios
+    .replace(/[ \t]+\n/g, '\n')
+    // Máximo 2 saltos de línea consecutivos
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
 exports.handler = async (event) => {
   if (event.httpMethod !== "POST") {
     return { statusCode: 405, body: "Method Not Allowed" };
@@ -449,7 +474,7 @@ exports.handler = async (event) => {
         throw new Error(data.error.message);
       }
 
-      assistantReply = data.content[0].text;
+      assistantReply = formatForWhatsApp(data.content[0].text);
 
     } catch (err) {
       if (err.message === "TIMEOUT") {
