@@ -47,25 +47,40 @@ async function summarizeHistory(messages, systemPrompt) {
   return data.content?.[0]?.text || "";
 }
 
-// Detecta qué propiedad eligió el huésped basándose en su mensaje
+// ─────────────────────────────────────────────────────────────
+// DETECCIÓN INTELIGENTE DE PROPIEDAD
+// Maneja: errores ortográficos, nombres parciales, búsqueda
+// por ciudad/país, y cuando el huésped no sabe el nombre exacto
+// ─────────────────────────────────────────────────────────────
 async function detectPropertyFromMessage(userMessage, propertiesList) {
   const propertiesText = propertiesList.map((p, i) =>
     `${i + 1}. property_id: "${p.property_id}" | name: "${p.name}" | location: "${p.location || ""}"`
   ).join("\n");
 
-  const detectionPrompt = `You are helping identify which hotel a guest wants to contact.
+  const detectionPrompt = `You are helping identify which property a guest wants to contact based on their message.
 
 Available properties:
 ${propertiesText}
 
 Guest message: "${userMessage}"
 
-Instructions:
-- If the guest clearly refers to one property (by name, number, location, or partial match), return that property_id.
-- If the message is ambiguous and could match more than one property, return "AMBIGUOUS".
-- If the message doesn't seem to be choosing a property at all, return "NONE".
+Your job is to match the guest's message to one of the properties above. Be flexible and intelligent:
+- Match partial names: "frederick hotel" → property named "Frederick"
+- Match with typos: "frederik", "frederic" → "Frederick"  
+- Match by location: "hotel in USA", "something in San Francisco" → properties in USA/San Francisco
+- Match by country/region even if no specific name is given
+- If the guest mentions a city or country that matches only ONE property, return that property_id
+- If the guest mentions a city or country that matches MULTIPLE properties, return "LOCATION_MULTIPLE:[country or city they mentioned]"
+- If the message is completely ambiguous with no location or name hints, return "NONE"
+- If it could match more than one property and there's no location hint, return "AMBIGUOUS"
 
-Respond ONLY with the property_id value, "AMBIGUOUS", or "NONE". No explanation.`;
+Respond ONLY with:
+- The exact property_id value (e.g. "frederick")
+- "AMBIGUOUS"  
+- "NONE"
+- "LOCATION_MULTIPLE:USA" (replace USA with the location they mentioned)
+
+No explanation. No other text.`;
 
   const response = await fetch(ANTHROPIC_API, {
     method: "POST",
@@ -85,6 +100,47 @@ Respond ONLY with the property_id value, "AMBIGUOUS", or "NONE". No explanation.
   return (data.content?.[0]?.text || "NONE").trim();
 }
 
+// Construye el mensaje de selección agrupando propiedades por país
+function buildSelectionMessage(propertiesList, filterLocation) {
+  let filtered = propertiesList;
+
+  if (filterLocation) {
+    const loc = filterLocation.toLowerCase();
+    filtered = propertiesList.filter(p =>
+      (p.location || "").toLowerCase().includes(loc)
+    );
+    // Si el filtro no devuelve nada, mostrar todas
+    if (filtered.length === 0) filtered = propertiesList;
+  }
+
+  // Agrupar por país
+  const grouped = {};
+  filtered.forEach(p => {
+    const parts = (p.location || "").split(",");
+    const country = parts.length > 1 ? parts[parts.length - 1].trim() : (p.location || "Other");
+    if (!grouped[country]) grouped[country] = [];
+    grouped[country].push(p);
+  });
+
+  let optionsText = "";
+  let index = 1;
+  const flatList = [];
+
+  Object.entries(grouped).forEach(([country, props]) => {
+    if (Object.keys(grouped).length > 1) {
+      optionsText += `\n📍 *${country}*\n`;
+    }
+    props.forEach(p => {
+      const city = (p.location || "").split(",")[0].trim();
+      optionsText += `${index}. ${p.name}${city ? ` — ${city}` : ""}\n`;
+      flatList.push(p);
+      index++;
+    });
+  });
+
+  return { optionsText: optionsText.trim(), flatList };
+}
+
 exports.handler = async (event) => {
   if (event.httpMethod !== "POST") {
     return { statusCode: 405, body: "Method Not Allowed" };
@@ -97,19 +153,19 @@ exports.handler = async (event) => {
 
     if (contentType.includes("application/x-www-form-urlencoded")) {
       const params = new URLSearchParams(event.body);
-      systemPrompt = params.get("systemPrompt") || "";
-      userMessage = params.get("userMessage");
-      history = params.get("history") || "[]";
-      ownerWhatsapp = params.get("ownerWhatsapp") || "";
-      propertyId = params.get("propertyId") || "";
+      systemPrompt    = params.get("systemPrompt") || "";
+      userMessage     = params.get("userMessage");
+      history         = params.get("history") || "[]";
+      ownerWhatsapp   = params.get("ownerWhatsapp") || "";
+      propertyId      = params.get("propertyId") || "";
       propertiesListRaw = params.get("propertiesList") || "[]";
     } else {
       const body = JSON.parse(event.body);
-      systemPrompt = body.systemPrompt || "";
-      userMessage = body.userMessage;
-      history = body.history || "[]";
-      ownerWhatsapp = body.ownerWhatsapp || "";
-      propertyId = body.propertyId || "";
+      systemPrompt    = body.systemPrompt || "";
+      userMessage     = body.userMessage;
+      history         = body.history || "[]";
+      ownerWhatsapp   = body.ownerWhatsapp || "";
+      propertyId      = body.propertyId || "";
       propertiesListRaw = body.propertiesList || "[]";
     }
 
@@ -134,87 +190,82 @@ exports.handler = async (event) => {
     // ─────────────────────────────────────────────
     if (!propertyId && propertiesList.length > 0) {
 
-      // Intentar detectar si el huésped ya mencionó un hotel
       const detected = await detectPropertyFromMessage(userMessage, propertiesList);
 
-      if (detected !== "NONE" && detected !== "AMBIGUOUS" && propertiesList.find(p => p.property_id === detected)) {
-        // Detección exitosa — confirmar y arrancar
+      // Detección exitosa — una sola propiedad identificada
+      if (detected !== "NONE" && detected !== "AMBIGUOUS" && !detected.startsWith("LOCATION_MULTIPLE")) {
         const confirmedProperty = propertiesList.find(p => p.property_id === detected);
-        const confirmMsg = `Hi! I'm LANI, your virtual assistant for *${confirmedProperty.name}*. How can I help you today? 😊`;
+
+        if (confirmedProperty) {
+          const confirmMsg = `¡Hola! Soy LANI 👋, tu asistente virtual de *${confirmedProperty.name}*. ¿En qué puedo ayudarte hoy? 😊`;
+
+          const updatedMessages = [
+            { role: "user", content: userMessage },
+            { role: "assistant", content: confirmMsg }
+          ];
+
+          return {
+            statusCode: 200,
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              reply: confirmMsg,
+              updatedHistory: JSON.stringify(updatedMessages),
+              needsEscalation: false,
+              escalationKeyword: null,
+              detectedPropertyId: detected
+            })
+          };
+        }
+      }
+
+      // Búsqueda por ubicación — múltiples propiedades en ese país/ciudad
+      if (detected.startsWith("LOCATION_MULTIPLE:")) {
+        const location = detected.replace("LOCATION_MULTIPLE:", "").trim();
+        const { optionsText, flatList } = buildSelectionMessage(propertiesList, location);
+
+        const selectionMsg = `Tenemos estas propiedades en *${location}*:\n\n${optionsText}\n\nResponde con el número o nombre de la que te interesa. 😊`;
 
         const updatedMessages = [
           { role: "user", content: userMessage },
-          { role: "assistant", content: confirmMsg }
+          { role: "assistant", content: selectionMsg }
         ];
 
         return {
           statusCode: 200,
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            reply: confirmMsg,
+            reply: selectionMsg,
             updatedHistory: JSON.stringify(updatedMessages),
             needsEscalation: false,
             escalationKeyword: null,
-            detectedPropertyId: detected
+            detectedPropertyId: null
           })
         };
       }
 
-      // No se detectó o es ambiguo — preguntar al huésped
-      const propertyOptions = propertiesList.map((p, i) =>
-        `${i + 1}. ${p.name}${p.location ? ` — ${p.location}` : ""}`
-      ).join("\n");
+      // Ambiguo o no detectado — mostrar lista completa agrupada por país
+      const { optionsText } = buildSelectionMessage(propertiesList, null);
 
-      let selectionPrompt;
-      if (detected === "AMBIGUOUS") {
-        selectionPrompt = `Hi! I found more than one property matching your search. Which one would you like to contact?\n\n${propertyOptions}\n\nJust reply with the number or name. 😊`;
-      } else {
-        selectionPrompt = `Hi! I'm LANI 👋 Which property would you like to contact?\n\n${propertyOptions}\n\nJust reply with the number or name.`;
-      }
+      const selectionMsg = detected === "AMBIGUOUS"
+        ? `Encontré más de una propiedad que podría coincidir. ¿Cuál te interesa?\n\n${optionsText}\n\nResponde con el número o nombre. 😊`
+        : `¡Hola! Soy LANI 👋 ¿Con cuál de nuestras propiedades quieres contactar?\n\n${optionsText}\n\nResponde con el número o nombre.`;
 
       const updatedMessages = [
         { role: "user", content: userMessage },
-        { role: "assistant", content: selectionPrompt }
+        { role: "assistant", content: selectionMsg }
       ];
 
       return {
         statusCode: 200,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          reply: selectionPrompt,
+          reply: selectionMsg,
           updatedHistory: JSON.stringify(updatedMessages),
           needsEscalation: false,
           escalationKeyword: null,
           detectedPropertyId: null
         })
       };
-    }
-
-    // ─────────────────────────────────────────────
-    // MODO SELECCIÓN — propertyId vacío, historial existente
-    // El huésped acaba de responder a la lista de opciones
-    // ─────────────────────────────────────────────
-    if (!propertyId && propertiesList.length > 0) {
-      // Este bloque ya fue manejado arriba, pero por seguridad:
-      const detected = await detectPropertyFromMessage(userMessage, propertiesList);
-      if (detected !== "NONE" && detected !== "AMBIGUOUS") {
-        const confirmedProperty = propertiesList.find(p => p.property_id === detected);
-        const confirmMsg = confirmedProperty
-          ? `Perfect! Connecting you with *${confirmedProperty.name}*. How can I help you? 😊`
-          : "I'm not sure which property you mean. Could you type the exact name or number from the list?";
-
-        return {
-          statusCode: 200,
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            reply: confirmMsg,
-            updatedHistory: JSON.stringify([{ role: "user", content: userMessage }, { role: "assistant", content: confirmMsg }]),
-            needsEscalation: false,
-            escalationKeyword: null,
-            detectedPropertyId: detected !== "NONE" && detected !== "AMBIGUOUS" ? detected : null
-          })
-        };
-      }
     }
 
     // ─────────────────────────────────────────────
@@ -296,12 +347,12 @@ exports.handler = async (event) => {
     } catch (err) {
       if (err.message === "TIMEOUT") {
         assistantReply = ownerWhatsapp
-          ? `Sorry, I'm having a slow connection right now. Please contact us directly at ${ownerWhatsapp} for immediate assistance.`
-          : "Sorry, I'm experiencing a slow connection. Please try again in a moment.";
+          ? `Lo siento, tengo una conexión lenta en este momento. Por favor contáctanos directamente al ${ownerWhatsapp} para ayuda inmediata.`
+          : "Lo siento, estoy experimentando una conexión lenta. Por favor intenta de nuevo en un momento.";
       } else {
         assistantReply = ownerWhatsapp
-          ? `I'm having technical difficulties right now. Please contact us directly at ${ownerWhatsapp}.`
-          : "I'm having technical difficulties. Please try again in a moment.";
+          ? `Estoy teniendo dificultades técnicas. Por favor contáctanos directamente al ${ownerWhatsapp}.`
+          : "Estoy teniendo dificultades técnicas. Por favor intenta de nuevo en un momento.";
       }
     }
 
