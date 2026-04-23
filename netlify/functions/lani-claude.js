@@ -36,7 +36,7 @@ async function summarizeHistory(messages, systemPrompt) {
       "anthropic-version": "2023-06-01"
     },
     body: JSON.stringify({
-      model: "claude-sonnet-4-6",
+      model: "claude-sonnet-4-20250514",
       max_tokens: 300,
       system: systemPrompt,
       messages: [{ role: "user", content: summaryPrompt }]
@@ -49,8 +49,6 @@ async function summarizeHistory(messages, systemPrompt) {
 
 // ─────────────────────────────────────────────────────────────
 // DETECCIÓN INTELIGENTE DE PROPIEDAD
-// Maneja: errores ortográficos, nombres parciales, búsqueda
-// por ciudad/país, y cuando el huésped no sabe el nombre exacto
 // ─────────────────────────────────────────────────────────────
 async function detectPropertyFromMessage(userMessage, propertiesList) {
   const propertiesText = propertiesList.map((p, i) =>
@@ -71,18 +69,21 @@ NAME MATCHING:
 - Match with typos or spelling variations: "frederik", "frederic", "bay lantern" → match closest property
 - Match nicknames or shortened names
 
+NUMBER SELECTION:
+- If the guest writes just a number like "1", "2", "3" → match to that numbered property in the list above
+- "1" → first property in the list, "2" → second property, etc.
+
 LOCATION MATCHING (handle any language and variation):
 - "USA", "United States", "Estados Unidos", "EUA", "EEUU", "America", "Norteamerica" → all mean United States
 - "Filipinas", "Philippines", "Pilipinas", "Pinas", "PH" → all mean Philippines
 - "México", "Mexico", "Mex" → all mean Mexico
-- "España", "Spain", "Espana" → all mean Spain
-- "Tailandia", "Thailand", "Thai" → all mean Thailand
 - Apply the same multilingual logic to ANY country mentioned
 - City names also count: "San Francisco", "Manila", "Siargao", "Palawan", etc.
 - If guest says "hoteles en X" or "hotel in X" or "algo en X" — treat X as a location filter
 
 DECISION RULES:
 - If location or name matches exactly ONE property → return that property_id
+- If the guest wrote a number → return the property_id at that position in the list
 - If location matches MULTIPLE properties → return "LOCATION_MULTIPLE:[the location term the guest used, as-is]"
 - If message has no useful hints → return "NONE"
 - If hints exist but match multiple and no location → return "AMBIGUOUS"
@@ -103,7 +104,7 @@ No explanation. No punctuation. No other text.`;
       "anthropic-version": "2023-06-01"
     },
     body: JSON.stringify({
-      model: "claude-sonnet-4-6",
+      model: "claude-sonnet-4-20250514",
       max_tokens: 50,
       messages: [{ role: "user", content: detectionPrompt }]
     })
@@ -115,94 +116,46 @@ No explanation. No punctuation. No other text.`;
 
 // ─────────────────────────────────────────────────────────────
 // NORMALIZACIÓN DE PAÍSES
-// Mapea variaciones en cualquier idioma al nombre canónico
 // ─────────────────────────────────────────────────────────────
 const COUNTRY_ALIASES = {
-  // USA
-  "usa": "United States",
-  "us": "United States",
-  "united states": "United States",
-  "united states of america": "United States",
-  "estados unidos": "United States",
-  "eua": "United States",
-  "eeuu": "United States",
-  "america": "United States",
-  "norteamerica": "United States",
-  "north america": "United States",
-  "u.s.": "United States",
-  "u.s.a.": "United States",
-  // Philippines
-  "philippines": "Philippines",
-  "filipinas": "Philippines",
-  "pilipinas": "Philippines",
-  "pinas": "Philippines",
-  "ph": "Philippines",
-  "phils": "Philippines",
-  // Mexico
-  "mexico": "Mexico",
-  "méxico": "Mexico",
-  "mex": "Mexico",
-  // Spain
-  "spain": "Spain",
-  "españa": "Spain",
-  "espana": "Spain",
-  // Thailand
-  "thailand": "Thailand",
-  "tailandia": "Thailand",
-  "thai": "Thailand",
-  // Indonesia
-  "indonesia": "Indonesia",
-  "bali": "Indonesia",
-  // Japan
-  "japan": "Japan",
-  "japon": "Japan",
-  "japón": "Japan",
-  // France
-  "france": "France",
-  "francia": "France",
-  // Italy
-  "italy": "Italy",
-  "italia": "Italy",
-  // Portugal
+  "usa": "United States", "us": "United States", "united states": "United States",
+  "united states of america": "United States", "estados unidos": "United States",
+  "eua": "United States", "eeuu": "United States", "america": "United States",
+  "norteamerica": "United States", "north america": "United States",
+  "u.s.": "United States", "u.s.a.": "United States",
+  "philippines": "Philippines", "filipinas": "Philippines", "pilipinas": "Philippines",
+  "pinas": "Philippines", "ph": "Philippines", "phils": "Philippines",
+  "mexico": "Mexico", "méxico": "Mexico", "mex": "Mexico",
+  "spain": "Spain", "españa": "Spain", "espana": "Spain",
+  "thailand": "Thailand", "tailandia": "Thailand", "thai": "Thailand",
+  "indonesia": "Indonesia", "bali": "Indonesia",
+  "japan": "Japan", "japon": "Japan", "japón": "Japan",
+  "france": "France", "francia": "France",
+  "italy": "Italy", "italia": "Italy",
   "portugal": "Portugal",
-  // Colombia
   "colombia": "Colombia",
-  // Peru
-  "peru": "Peru",
-  "perú": "Peru",
-  // Argentina
+  "peru": "Peru", "perú": "Peru",
   "argentina": "Argentina",
-  // Brazil
-  "brazil": "Brazil",
-  "brasil": "Brazil",
-  // Australia
+  "brazil": "Brazil", "brasil": "Brazil",
   "australia": "Australia",
-  // UK
-  "uk": "United Kingdom",
-  "united kingdom": "United Kingdom",
-  "england": "United Kingdom",
-  "britain": "United Kingdom",
-  "reino unido": "United Kingdom",
-  "inglaterra": "United Kingdom",
-  // Canada
-  "canada": "Canada",
-  "canadá": "Canada",
+  "uk": "United Kingdom", "united kingdom": "United Kingdom", "england": "United Kingdom",
+  "britain": "United Kingdom", "reino unido": "United Kingdom", "inglaterra": "United Kingdom",
+  "canada": "Canada", "canadá": "Canada",
 };
 
-// Normaliza un string de ubicación al nombre canónico de país si existe
 function normalizeLocation(loc) {
   if (!loc) return loc;
   const lower = loc.toLowerCase().trim();
   return COUNTRY_ALIASES[lower] || loc;
 }
 
-// Verifica si dos strings de ubicación son equivalentes
 function locationsMatch(a, b) {
   if (!a || !b) return false;
   const normA = normalizeLocation(a).toLowerCase();
   const normB = normalizeLocation(b).toLowerCase();
   return normA.includes(normB) || normB.includes(normA);
 }
+
 function buildSelectionMessage(propertiesList, filterLocation) {
   let filtered = propertiesList;
 
@@ -219,7 +172,7 @@ function buildSelectionMessage(propertiesList, filterLocation) {
     if (filtered.length === 0) filtered = propertiesList;
   }
 
-  // Agrupar por país (parte después de la última coma)
+  // Agrupar por país
   const grouped = {};
   filtered.forEach(p => {
     const parts = (p.location || "").split(",");
@@ -247,18 +200,12 @@ function buildSelectionMessage(propertiesList, filterLocation) {
   return { optionsText: optionsText.trim(), flatList };
 }
 
-
 // ─────────────────────────────────────────────────────────────
 // LIMPIEZA DE MARKDOWN PARA WHATSAPP
-// Claude usa markdown estándar, WhatsApp tiene su propio formato
 // ─────────────────────────────────────────────────────────────
 function formatForWhatsApp(text) {
-  // Convertir tablas markdown a texto plano legible
-  // Ejemplo: | Garden Room | 120 PHP | → 🏠 Garden Room: 120 PHP
   text = text.replace(/\|(.+)\|/g, (match, content) => {
-    // Ignorar líneas separadoras como |---|---|
     if (/^[\s\-\|]+$/.test(match)) return '';
-    // Convertir celdas a texto separado por " · "
     const cells = content.split('|')
       .map(c => c.trim())
       .filter(c => c.length > 0 && !/^[-\s]+$/.test(c));
@@ -267,23 +214,14 @@ function formatForWhatsApp(text) {
   });
 
   return text
-    // **negrita** → *negrita* (WhatsApp bold)
     .replace(/\*\*(.+?)\*\*/g, '*$1*')
-    // ### Encabezados → negrita WhatsApp
     .replace(/#{1,6}\s+(.+)/g, '*$1*')
-    // ~~tachado~~ → eliminar
     .replace(/~~(.+?)~~/g, '$1')
-    // `código inline` → eliminar backticks
     .replace(/`(.+?)`/g, '$1')
-    // Bloques de código ```...``` → eliminar
     .replace(/```[\s\S]*?```/g, '')
-    // [texto](url) → texto: url
     .replace(/\[(.+?)\]\((.+?)\)/g, '$1: $2')
-    // Líneas horizontales --- → eliminar
     .replace(/^---+$/gm, '')
-    // Limpiar líneas con solo espacios
     .replace(/[ \t]+\n/g, '\n')
-    // Máximo 2 saltos de línea consecutivos
     .replace(/\n{3,}/g, '\n\n')
     .trim();
 }
@@ -300,19 +238,19 @@ exports.handler = async (event) => {
 
     if (contentType.includes("application/x-www-form-urlencoded")) {
       const params = new URLSearchParams(event.body);
-      systemPrompt    = params.get("systemPrompt") || "";
-      userMessage     = params.get("userMessage");
-      history         = params.get("history") || "[]";
-      ownerWhatsapp   = params.get("ownerWhatsapp") || "";
-      propertyId      = params.get("propertyId") || "";
+      systemPrompt      = params.get("systemPrompt") || "";
+      userMessage       = params.get("userMessage");
+      history           = params.get("history") || "[]";
+      ownerWhatsapp     = params.get("ownerWhatsapp") || "";
+      propertyId        = params.get("propertyId") || "";
       propertiesListRaw = params.get("propertiesList") || "[]";
     } else {
       const body = JSON.parse(event.body);
-      systemPrompt    = body.systemPrompt || "";
-      userMessage     = body.userMessage;
-      history         = body.history || "[]";
-      ownerWhatsapp   = body.ownerWhatsapp || "";
-      propertyId      = body.propertyId || "";
+      systemPrompt      = body.systemPrompt || "";
+      userMessage       = body.userMessage;
+      history           = body.history || "[]";
+      ownerWhatsapp     = body.ownerWhatsapp || "";
+      propertyId        = body.propertyId || "";
       propertiesListRaw = body.propertiesList || "[]";
     }
 
@@ -324,24 +262,38 @@ exports.handler = async (event) => {
       };
     }
 
-    // Parsear lista de propiedades
+    // Parsear lista completa de propiedades
     let propertiesList = [];
-    try {
-      propertiesList = JSON.parse(propertiesListRaw);
-    } catch (e) {
-      propertiesList = [];
-    }
+    try { propertiesList = JSON.parse(propertiesListRaw); } catch (e) { propertiesList = []; }
 
     // ─────────────────────────────────────────────
     // MODO IDENTIFICACIÓN — no hay propertyId aún
     // ─────────────────────────────────────────────
     if (!propertyId && propertiesList.length > 0) {
 
-      const detected = await detectPropertyFromMessage(userMessage, propertiesList);
+      // ── CLAVE: revisar si hay una flatList guardada en el historial ──
+      // Cuando LANI ya mostró una lista filtrada al usuario, el siguiente
+      // mensaje (ej. "2") debe resolverse contra ESA lista, no la completa.
+      let pendingFlatList = null;
+      try {
+        const parsedHistory = JSON.parse(history);
+        const msgs = Array.isArray(parsedHistory) ? parsedHistory : (parsedHistory.messages || []);
+        // Buscar el último mensaje del assistant que tenga __flatList guardada
+        for (let i = msgs.length - 1; i >= 0; i--) {
+          if (msgs[i].role === "assistant" && msgs[i].__flatList) {
+            pendingFlatList = msgs[i].__flatList;
+            break;
+          }
+        }
+      } catch (e) {}
+
+      // Si hay flatList pendiente, detectar contra ella (lista filtrada)
+      const listToDetect = pendingFlatList || propertiesList;
+      const detected = await detectPropertyFromMessage(userMessage, listToDetect);
 
       // Detección exitosa — una sola propiedad identificada
       if (detected !== "NONE" && detected !== "AMBIGUOUS" && !detected.startsWith("LOCATION_MULTIPLE")) {
-        const confirmedProperty = propertiesList.find(p => p.property_id === detected);
+        const confirmedProperty = listToDetect.find(p => p.property_id === detected);
 
         if (confirmedProperty) {
           const confirmMsg = `¡Hola! Soy LANI 👋, tu asistente virtual de *${confirmedProperty.name}*. ¿En qué puedo ayudarte hoy? 😊`;
@@ -372,9 +324,10 @@ exports.handler = async (event) => {
 
         const selectionMsg = `Tenemos estas propiedades en *${location}*:\n\n${optionsText}\n\nResponde con el número o nombre de la que te interesa. 😊`;
 
+        // ── CLAVE: guardar flatList en el mensaje del assistant ──
         const updatedMessages = [
           { role: "user", content: userMessage },
-          { role: "assistant", content: selectionMsg }
+          { role: "assistant", content: selectionMsg, __flatList: flatList }
         ];
 
         return {
@@ -390,16 +343,17 @@ exports.handler = async (event) => {
         };
       }
 
-      // Ambiguo o no detectado — mostrar lista completa agrupada por país
-      const { optionsText } = buildSelectionMessage(propertiesList, null);
+      // Ambiguo o no detectado — mostrar lista completa
+      const { optionsText, flatList } = buildSelectionMessage(propertiesList, null);
 
       const selectionMsg = detected === "AMBIGUOUS"
         ? `Encontré más de una propiedad que podría coincidir. ¿Cuál te interesa?\n\n${optionsText}\n\nResponde con el número o nombre. 😊`
         : `¡Hola! Soy LANI 👋 ¿Con cuál de nuestras propiedades quieres contactar?\n\n${optionsText}\n\nResponde con el número o nombre.`;
 
+      // ── CLAVE: guardar flatList en el mensaje del assistant ──
       const updatedMessages = [
         { role: "user", content: userMessage },
-        { role: "assistant", content: selectionMsg }
+        { role: "assistant", content: selectionMsg, __flatList: flatList }
       ];
 
       return {
@@ -440,6 +394,12 @@ exports.handler = async (event) => {
         previousMessages = Array.isArray(parsed) ? parsed : [];
       }
 
+      // Limpiar __flatList del historial antes de mandarlo a Claude
+      previousMessages = previousMessages.map(m => {
+        const clean = { role: m.role, content: m.content };
+        return clean;
+      });
+
       if (previousMessages.length >= SUMMARY_THRESHOLD) {
         const summary = await summarizeHistory(previousMessages, systemPrompt);
         conversationSummary = summary;
@@ -474,7 +434,7 @@ exports.handler = async (event) => {
             "anthropic-version": "2023-06-01"
           },
           body: JSON.stringify({
-            model: "claude-sonnet-4-6",
+            model: "claude-sonnet-4-20250514",
             max_tokens: 1024,
             system: fullSystemPrompt,
             messages: messages
@@ -485,9 +445,7 @@ exports.handler = async (event) => {
 
       const data = await response.json();
 
-      if (data.error) {
-        throw new Error(data.error.message);
-      }
+      if (data.error) throw new Error(data.error.message);
 
       assistantReply = formatForWhatsApp(data.content[0].text);
 
