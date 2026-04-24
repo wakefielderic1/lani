@@ -271,14 +271,10 @@ exports.handler = async (event) => {
     // ─────────────────────────────────────────────
     if (!propertyId && propertiesList.length > 0) {
 
-      // ── CLAVE: revisar si hay una flatList guardada en el historial ──
-      // Cuando LANI ya mostró una lista filtrada al usuario, el siguiente
-      // mensaje (ej. "2") debe resolverse contra ESA lista, no la completa.
       let pendingFlatList = null;
       try {
         const parsedHistory = JSON.parse(history);
         const msgs = Array.isArray(parsedHistory) ? parsedHistory : (parsedHistory.messages || []);
-        // Buscar el último mensaje del assistant que tenga __flatList guardada
         for (let i = msgs.length - 1; i >= 0; i--) {
           if (msgs[i].role === "assistant" && msgs[i].__flatList) {
             pendingFlatList = msgs[i].__flatList;
@@ -287,11 +283,9 @@ exports.handler = async (event) => {
         }
       } catch (e) {}
 
-      // Si hay flatList pendiente, detectar contra ella (lista filtrada)
       const listToDetect = pendingFlatList || propertiesList;
       const detected = await detectPropertyFromMessage(userMessage, listToDetect);
 
-      // Detección exitosa — una sola propiedad identificada
       if (detected !== "NONE" && detected !== "AMBIGUOUS" && !detected.startsWith("LOCATION_MULTIPLE")) {
         const confirmedProperty = listToDetect.find(p => p.property_id === detected);
 
@@ -317,14 +311,12 @@ exports.handler = async (event) => {
         }
       }
 
-      // Búsqueda por ubicación — múltiples propiedades en ese país/ciudad
       if (detected.startsWith("LOCATION_MULTIPLE:")) {
         const location = detected.replace("LOCATION_MULTIPLE:", "").trim();
         const { optionsText, flatList } = buildSelectionMessage(propertiesList, location);
 
         const selectionMsg = `Tenemos estas propiedades en *${location}*:\n\n${optionsText}\n\nResponde con el número o nombre de la que te interesa. 😊`;
 
-        // ── CLAVE: guardar flatList en el mensaje del assistant ──
         const updatedMessages = [
           { role: "user", content: userMessage },
           { role: "assistant", content: selectionMsg, __flatList: flatList }
@@ -343,14 +335,12 @@ exports.handler = async (event) => {
         };
       }
 
-      // Ambiguo o no detectado — mostrar lista completa
       const { optionsText, flatList } = buildSelectionMessage(propertiesList, null);
 
       const selectionMsg = detected === "AMBIGUOUS"
         ? `Encontré más de una propiedad que podría coincidir. ¿Cuál te interesa?\n\n${optionsText}\n\nResponde con el número o nombre. 😊`
         : `¡Hola! Soy LANI 👋 ¿Con cuál de nuestras propiedades quieres contactar?\n\n${optionsText}\n\nResponde con el número o nombre.`;
 
-      // ── CLAVE: guardar flatList en el mensaje del assistant ──
       const updatedMessages = [
         { role: "user", content: userMessage },
         { role: "assistant", content: selectionMsg, __flatList: flatList }
@@ -412,9 +402,23 @@ exports.handler = async (event) => {
       previousMessages = [];
     }
 
+    // ─────────────────────────────────────────────
+    // REGLA DE INTEGRIDAD DE DATOS
+    // Evita que LANI invente información no provista
+    // ─────────────────────────────────────────────
+    const dataIntegrityRule = `
+
+CRITICAL RULE — DATA INTEGRITY:
+You must ONLY use information explicitly provided in this system prompt to answer guest questions.
+If a guest asks about something not covered here (room types, prices, amenities, policies, availability, or any other detail), respond exactly like this:
+"I don't have that information available right now. Please contact [owner name] directly for assistance."
+NEVER invent, assume, or borrow details from other properties or your general knowledge.
+If a field is empty or not mentioned in this prompt, treat it as unknown — do not fill in the gap.
+This rule overrides everything else.`;
+
     const fullSystemPrompt = conversationSummary
-      ? `${systemPrompt}\n\nConversation summary so far: ${conversationSummary}`
-      : systemPrompt;
+      ? `${systemPrompt}${dataIntegrityRule}\n\nConversation summary so far: ${conversationSummary}`
+      : `${systemPrompt}${dataIntegrityRule}`;
 
     const messages = [
       ...previousMessages,
