@@ -476,10 +476,16 @@ This rule overrides everything else.`;
       }
     }
 
+    // Asegurar que assistantReply es solo un string de texto, nunca JSON
+    let cleanReply = typeof assistantReply === 'string' ? assistantReply.trim() : String(assistantReply).trim();
+    if (cleanReply.startsWith('[') || cleanReply.startsWith('{')) {
+      cleanReply = "Disculpa, hubo un error. Por favor intenta de nuevo.";
+    }
+
     const updatedMessages = [
       ...previousMessages,
       { role: "user", content: userMessage },
-      { role: "assistant", content: assistantReply }
+      { role: "assistant", content: cleanReply }
     ];
 
     const updatedHistory = JSON.stringify(
@@ -492,7 +498,7 @@ This rule overrides everything else.`;
       statusCode: 200,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        reply: stripMarkdown(assistantReply),
+        reply: stripMarkdown(cleanReply),
         updatedHistory: updatedHistory,
         needsEscalation: needsEscalation,
         escalationKeyword: needsEscalation
