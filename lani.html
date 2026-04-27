@@ -604,6 +604,27 @@
 // ─── CONFIG ───────────────────────────────────────────
 const MAKE_WEBHOOK_URL = ''; // paste your Make webhook URL here
 
+// ─── TIMESTAMP FORMATTER ───────────────────────────────
+function getFormattedTimestamp() {
+  const date = new Date();
+  const formatter = new Intl.DateTimeFormat('es-MX', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZone: 'America/Mexico_City'
+  });
+  const parts = formatter.formatToParts(date);
+  const day = parts.find(p => p.type === 'day').value;
+  const month = parts.find(p => p.type === 'month').value;
+  const year = parts.find(p => p.type === 'year').value;
+  const hour = parts.find(p => p.type === 'hour').value;
+  const minute = parts.find(p => p.type === 'minute').value;
+  return `${day}/${month}/${year} ${hour}:${minute}`;
+}
+
 // ─── FORM STEPS ───────────────────────────────────────
 const UPSELLS = [
   { id: 'earlyCheckin',   label: 'Early check-in',        unit: '/ booking' },
@@ -836,7 +857,7 @@ function startTimer() {
         whatsapp: formData.whatsapp || '',
         email: formData.email || '',
         google: formData.google || '',
-        timestamp: new Date().toISOString()
+        timestamp: getFormattedTimestamp()
       })
     }).catch(() => {});
   }
@@ -874,7 +895,7 @@ document.getElementById('btn-end').addEventListener('click', () => {
         whatsapp: formData.whatsapp || '',
         email: formData.email || '',
         google: formData.google || '',
-        timestamp: new Date().toISOString()
+        timestamp: getFormattedTimestamp()
       })
     }).catch(() => {});
   }
