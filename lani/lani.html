@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LANI — Meeting Cost Counter</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --purple-deep: #26215C;
+    --purple-brand: #534AB7;
+    --purple-light: #EEEDFE;
+    --purple-mid: #AFA9EC;
+    --white: #ffffff;
+    --off-white: #F7F6FF;
+    --gray-text: #6B6B80;
+    --gray-border: #E2E1F0;
+    --red: #E24B4A;
+    --green: #1D9E75;
+    --font-display: 'DM Serif Display', Georgia, serif;
+    --font-body: 'DM Sans', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font-body);
+    background: var(--purple-deep);
+    color: var(--white);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* ── Header ── */
+  header {
+    width: 100%;
+    padding: 1.5rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .lani-logo {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+
+  .lani-wordmark {
+    font-family: var(--font-display);
+    font-size: 22px;
+    letter-spacing: 0.12em;
+    color: var(--white);
+  }
+
+  .lani-tagline {
+    font-size: 11px;
+    color: var(--purple-mid);
+    letter-spacing: 0.06em;
+    font-weight: 300;
+  }
+
+  .powered-by {
+    font-size: 11px;
+    color: rgba(255,255,255,0.35);
+    font-weight: 300;
+    letter-spacing: 0.04em;
+  }
+
+  .powered-by span {
+    color: var(--purple-mid);
+    font-weight: 500;
+  }
+
+  /* ── Main wrapper ── */
+  main {
+    width: 100%;
+    max-width: 560px;
+    padding: 2rem 1.5rem 4rem;
+    flex: 1;
+  }
+
+  /* ── Screens ── */
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* ── Progress ── */
+  .progress-bar {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 2rem;
+  }
+
+  .progress-seg {
+    height: 3px;
+    flex: 1;
+    border-radius: 2px;
+    background: rgba(255,255,255,0.1);
+    transition: background 0.3s;
+  }
+
+  .progress-seg.done { background: var(--purple-brand); }
+
+  /* ── Form ── */
+  .step-header { margin-bottom: 1.75rem; }
+
+  .step-number {
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    color: var(--purple-mid);
+    font-weight: 500;
+    margin-bottom: 6px;
+  }
+
+  h2 {
+    font-family: var(--font-display);
+    font-size: 26px;
+    font-weight: 400;
+    color: var(--white);
+    line-height: 1.2;
+    margin-bottom: 6px;
+  }
+
+  .step-sub {
+    font-size: 13px;
+    color: rgba(255,255,255,0.45);
+    font-weight: 300;
+  }
+
+  .field { margin-bottom: 1rem; }
+
+  .field label {
+    display: block;
+    font-size: 12px;
+    letter-spacing: 0.05em;
+    color: var(--purple-mid);
+    font-weight: 500;
+    margin-bottom: 6px;
+  }
+
+  .field input,
+  .field select,
+  .field textarea {
+    width: 100%;
+    padding: 11px 14px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    font-size: 14px;
+    color: var(--white);
+    font-family: var(--font-body);
+    font-weight: 400;
+    transition: border 0.2s;
+    outline: none;
+  }
+
+  .field input::placeholder { color: rgba(255,255,255,0.25); }
+  .field input:focus, .field select:focus { border-color: var(--purple-brand); background: rgba(83,74,183,0.12); }
+  .field select option { background: var(--purple-deep); }
+
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  /* ── Upsell section ── */
+  .upsell-section { margin-bottom: 1.25rem; }
+
+  .upsell-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+
+  .upsell-item label {
+    font-size: 13px;
+    color: rgba(255,255,255,0.7);
+    min-width: 180px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+  }
+
+  .upsell-item input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--purple-brand);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .upsell-price {
+    padding: 7px 12px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    font-size: 13px;
+    color: var(--white);
+    font-family: var(--font-body);
+    width: 120px;
+    outline: none;
+  }
+
+  .upsell-price:focus { border-color: var(--purple-brand); }
+  .upsell-price:disabled { opacity: 0.25; cursor: not-allowed; }
+
+  .upsell-unit {
+    font-size: 11px;
+    color: rgba(255,255,255,0.3);
+    white-space: nowrap;
+  }
+
+  /* ── Check pills ── */
+  .pills { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+
+  .pill {
+    padding: 7px 14px;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 999px;
+    font-size: 13px;
+    color: rgba(255,255,255,0.55);
+    cursor: pointer;
+    transition: all 0.15s;
+    user-select: none;
+  }
+
+  .pill.selected {
+    background: var(--purple-brand);
+    border-color: var(--purple-brand);
+    color: var(--white);
+  }
+
+  /* ── Buttons ── */
+  .btn-primary {
+    width: 100%;
+    padding: 14px;
+    background: var(--purple-brand);
+    color: var(--white);
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 500;
+    font-family: var(--font-body);
+    cursor: pointer;
+    margin-top: 1.5rem;
+    transition: background 0.2s, transform 0.1s;
+  }
+
+  .btn-primary:hover { background: #3C3489; }
+  .btn-primary:active { transform: scale(0.98); }
+
+  .btn-ghost {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.15);
+    color: rgba(255,255,255,0.6);
+    border-radius: 10px;
+    padding: 12px;
+    font-size: 14px;
+    font-family: var(--font-body);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .btn-ghost:hover { border-color: rgba(255,255,255,0.3); color: var(--white); }
+
+  .btn-back {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.15);
+    color: rgba(255,255,255,0.5);
+    border-radius: 12px;
+    padding: 14px 18px;
+    font-size: 15px;
+    font-family: var(--font-body);
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+
+  .btn-back:hover { border-color: rgba(255,255,255,0.35); color: var(--white); }
+
+  /* ── Timer screen ── */
+  .timer-hero {
+    text-align: center;
+    padding: 2.5rem 0 2rem;
+  }
+
+  .prop-label {
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    color: var(--purple-mid);
+    font-weight: 500;
+    margin-bottom: 6px;
+  }
+
+  .timer-digits {
+    font-family: var(--font-display);
+    font-size: 72px;
+    letter-spacing: -2px;
+    color: var(--white);
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+  }
+
+  .timer-sub { font-size: 13px; color: rgba(255,255,255,0.35); margin-top: 8px; }
+
+  .cost-block { text-align: center; margin: 2rem 0; }
+
+  .cost-label {
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    color: var(--purple-mid);
+    font-weight: 500;
+    margin-bottom: 8px;
+  }
+
+  .cost-figure {
+    font-family: var(--font-display);
+    font-size: 52px;
+    color: var(--white);
+    letter-spacing: -1px;
+  }
+
+  .cost-caption { font-size: 13px; color: rgba(255,255,255,0.4); margin-top: 6px; }
+
+  .mini-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin: 1.5rem 0 2rem;
+  }
+
+  .mini-stat {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    padding: 14px 10px;
+    text-align: center;
+  }
+
+  .mini-val { font-size: 18px; font-weight: 500; color: var(--white); }
+  .mini-lbl { font-size: 11px; color: rgba(255,255,255,0.35); margin-top: 3px; }
+
+  .timer-btns { display: flex; gap: 10px; }
+
+  .btn-end {
+    flex: 2;
+    padding: 14px;
+    background: var(--red);
+    color: var(--white);
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 500;
+    font-family: var(--font-body);
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+
+  .btn-end:hover { opacity: 0.85; }
+
+  /* ── Summary screen ── */
+  .summary-hero {
+    background: var(--purple-brand);
+    border-radius: 20px;
+    padding: 2.5rem 2rem;
+    text-align: center;
+    margin-bottom: 1.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .summary-hero::before {
+    content: '';
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 180px; height: 180px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.06);
+  }
+
+  .summary-hero::after {
+    content: '';
+    position: absolute;
+    bottom: -60px; left: -30px;
+    width: 220px; height: 220px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.04);
+  }
+
+  .summary-context {
+    font-size: 13px;
+    color: rgba(255,255,255,0.65);
+    margin-bottom: 10px;
+    position: relative; z-index: 1;
+  }
+
+  .summary-amount {
+    font-family: var(--font-display);
+    font-size: 60px;
+    color: var(--white);
+    letter-spacing: -1px;
+    line-height: 1;
+    position: relative; z-index: 1;
+  }
+
+  .summary-dur {
+    font-size: 14px;
+    color: rgba(255,255,255,0.55);
+    margin-top: 8px;
+    position: relative; z-index: 1;
+  }
+
+  .panel {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 16px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .panel-title {
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    color: var(--purple-mid);
+    font-weight: 500;
+    margin-bottom: 1rem;
+  }
+
+  .row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 9px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    font-size: 14px;
+  }
+
+  .row:last-child { border-bottom: none; }
+  .row-label { color: rgba(255,255,255,0.5); }
+  .row-val { font-weight: 500; color: var(--white); }
+  .row-total .row-label { color: var(--white); font-weight: 500; }
+  .row-total .row-val { color: var(--purple-mid); font-size: 16px; }
+
+  .insight-text {
+    font-size: 13px;
+    color: rgba(255,255,255,0.55);
+    line-height: 1.75;
+  }
+
+  .insight-text strong { color: var(--white); }
+
+  .real-terms li {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 10px;
+    font-size: 14px;
+    color: rgba(255,255,255,0.55);
+    list-style: none;
+  }
+
+  .real-terms li strong { color: var(--white); }
+
+  .bullet-icon {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: rgba(83,74,183,0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    flex-shrink: 0;
+    margin-top: 2px;
+    color: var(--purple-mid);
+  }
+
+  .disclaimer {
+    font-size: 11px;
+    color: rgba(255,255,255,0.2);
+    margin-top: 1rem;
+    line-height: 1.6;
+  }
+
+  /* ── Animations ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .screen.active { animation: fadeUp 0.35s ease both; }
+
+  @keyframes pulseCost {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+  }
+
+  .cost-figure { animation: pulseCost 2.5s ease infinite; }
+
+  /* ── Responsive ── */
+  @media (max-width: 480px) {
+    .timer-digits { font-size: 54px; }
+    .cost-figure { font-size: 40px; }
+    .summary-amount { font-size: 46px; }
+    .grid2 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="lani-logo">
+    <div class="lani-wordmark">LANI</div>
+    <div class="lani-tagline">Learns And Negotiates Intelligently</div>
+  </div>
+  <div class="powered-by">by <span>WhyNot Automate</span></div>
+</header>
+
+<main>
+
+  <!-- ══ FORM SCREEN ══ -->
+  <div id="screen-form" class="screen active">
+    <div class="progress-bar" id="prog"></div>
+    <div id="form-steps"></div>
+  </div>
+
+  <!-- ══ TIMER SCREEN ══ -->
+  <div id="screen-timer" class="screen">
+    <div class="timer-hero">
+      <div class="prop-label" id="t-propname">YOUR PROPERTY</div>
+      <div class="timer-digits" id="timer-display">00:00:00</div>
+      <div class="timer-sub">meeting duration</div>
+    </div>
+
+    <div class="cost-block">
+      <div class="cost-label">OPPORTUNITY COST SO FAR</div>
+      <div class="cost-figure" id="cost-live">$0.00</div>
+      <div class="cost-caption">lost while we've been talking</div>
+    </div>
+
+    <div class="mini-stats">
+      <div class="mini-stat">
+        <div class="mini-val" id="m-rooms">—</div>
+        <div class="mini-lbl">rooms</div>
+      </div>
+      <div class="mini-stat">
+        <div class="mini-val" id="m-rate">—</div>
+        <div class="mini-lbl">avg rate/night</div>
+      </div>
+      <div class="mini-stat">
+        <div class="mini-val" id="m-cpm">—</div>
+        <div class="mini-lbl">cost / min</div>
+      </div>
+    </div>
+
+    <div class="timer-btns">
+      <button class="btn-ghost" id="btn-pause" style="flex:1">Pause</button>
+      <button class="btn-end" id="btn-end">End meeting &rarr;</button>
+    </div>
+  </div>
+
+  <!-- ══ SUMMARY SCREEN ══ -->
+  <div id="screen-summary" class="screen">
+
+    <div class="summary-hero">
+      <div class="summary-context">During this meeting, <span id="s-prop">your property</span> missed out on:</div>
+      <div class="summary-amount" id="s-total">$0.00</div>
+      <div class="summary-dur" id="s-dur">in 0 min of meeting</div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">HOW WE CALCULATED THIS</div>
+      <div class="row"><span class="row-label">Rooms</span><span class="row-val" id="b-rooms">—</span></div>
+      <div class="row"><span class="row-label">Avg nightly rate</span><span class="row-val" id="b-rate">—</span></div>
+      <div class="row"><span class="row-label">Avg occupancy</span><span class="row-val" id="b-occ">—</span></div>
+      <div class="row"><span class="row-label">Base daily revenue</span><span class="row-val" id="b-daily">—</span></div>
+      <div class="row"><span class="row-label">Upsell revenue/day</span><span class="row-val" id="b-upsell">—</span></div>
+      <div class="row"><span class="row-label">Total daily potential</span><span class="row-val" id="b-totaldaily">—</span></div>
+      <div class="row"><span class="row-label">Revenue per minute</span><span class="row-val" id="b-permin">—</span></div>
+      <div class="row"><span class="row-label">Meeting duration</span><span class="row-val" id="b-dur">—</span></div>
+      <div class="row row-total"><span class="row-label">Total opportunity cost</span><span class="row-val" id="b-total">—</span></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">WHERE DOES THIS NUMBER COME FROM?</div>
+      <p class="insight-text" id="insight-text">—</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">WHAT THIS MEANS IN REAL TERMS</div>
+      <ul class="real-terms" id="real-terms"></ul>
+      <p class="disclaimer">Note: model assumes uniform demand across 24h. Actual peak check-in windows and evenings carry higher impact per minute.</p>
+    </div>
+
+    <button class="btn-primary" id="btn-restart" style="margin-top:1rem">Start new meeting</button>
+  </div>
+
+</main>
+
+<script>
+// ─── CONFIG ───────────────────────────────────────────
+const MAKE_WEBHOOK_URL = ''; // paste your Make webhook URL here
+
+// ─── FORM STEPS ───────────────────────────────────────
+const UPSELLS = [
+  { id: 'earlyCheckin',   label: 'Early check-in',        unit: '/ booking' },
+  { id: 'lateCheckout',   label: 'Late checkout',          unit: '/ booking' },
+  { id: 'breakfast',      label: 'Breakfast package',      unit: '/ person/day' },
+  { id: 'airportTransfer',label: 'Airport transfer',       unit: '/ trip' },
+  { id: 'tours',          label: 'Tours & excursions',     unit: '/ person' },
+  { id: 'roomUpgrade',    label: 'Room upgrade',           unit: '/ booking' },
+  { id: 'spaWellness',    label: 'Spa / wellness',         unit: '/ session' },
+  { id: 'laundry',        label: 'Laundry service',        unit: '/ order' },
+];
+
+const OTAS = ['Booking.com','Airbnb','Expedia','Hotels.com','TripAdvisor','Hostelworld','Agoda','Direct website','WhatsApp','Instagram DM','Phone'];
+
+const steps = [
+  {
+    id: 'basics',
+    title: 'Your property',
+    subtitle: 'Quick intro so we can personalize your results',
+    fields: [
+      { id: 'propName',   label: 'Property name',   type: 'text',   ph: 'Sunrise Boutique Hotel' },
+      { id: 'ownerName',  label: "Owner's name",     type: 'text',   ph: 'John Smith' },
+    ]
+  },
+  {
+    id: 'revenue',
+    title: 'Revenue numbers',
+    subtitle: '100% confidential — only used for your calculation',
+    fields: [
+      { id: 'rooms',     label: 'Number of rooms',           type: 'number', ph: '20' },
+      { id: 'rate',      label: 'Average nightly rate (USD)', type: 'number', ph: '85' },
+      { id: 'occupancy', label: 'Average occupancy (%)',      type: 'number', ph: '70' },
+    ]
+  },
+  {
+    id: 'upsells',
+    title: 'Upsell & extras',
+    subtitle: 'Check everything you offer and enter the average revenue per transaction',
+    type: 'upsells'
+  },
+  {
+    id: 'otas',
+    title: 'Your booking channels',
+    subtitle: 'Where guests currently find and contact you',
+    type: 'pills',
+    options: OTAS
+  },
+  {
+    id: 'season',
+    title: 'Seasonality',
+    subtitle: 'Helps us give context to your numbers',
+    fields: [
+      { id: 'highSeason', label: 'High season months',    type: 'text',   ph: 'Dec, Jan, Jul, Aug' },
+      { id: 'lowSeason',  label: 'Low season months',     type: 'text',   ph: 'May, Jun, Sep' },
+      { id: 'language',   label: 'Primary guest language', type: 'select', options: ['English','Spanish','English & Spanish','Tagalog','Other'] },
+    ]
+  }
+];
+
+// ─── STATE ────────────────────────────────────────────
+let currentStep = 0;
+let formData    = {};
+let timerInt    = null;
+let seconds     = 0;
+let paused      = false;
+let costPerSec  = 0;
+let upsellPerSec = 0;
+
+// ─── PROGRESS ─────────────────────────────────────────
+function renderProgress() {
+  const el = document.getElementById('prog');
+  el.innerHTML = '';
+  steps.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = 'progress-seg' + (i <= currentStep ? ' done' : '');
+    el.appendChild(d);
+  });
+}
+
+// ─── RENDER STEP ──────────────────────────────────────
+function renderStep() {
+  renderProgress();
+  const step = steps[currentStep];
+  const isLast = currentStep === steps.length - 1;
+  let html = `
+    <div class="step-header">
+      <div class="step-number">STEP ${currentStep+1} OF ${steps.length}</div>
+      <h2>${step.title}</h2>
+      <div class="step-sub">${step.subtitle}</div>
+    </div>
+  `;
+
+  if (step.type === 'pills') {
+    html += '<div class="pills">';
+    step.options.forEach(opt => {
+      const sel = (formData['otas'] || []).includes(opt);
+      html += `<div class="pill${sel?' selected':''}" data-val="${opt}">${opt}</div>`;
+    });
+    html += '</div>';
+
+  } else if (step.type === 'upsells') {
+    html += '<div class="upsell-section">';
+    UPSELLS.forEach(u => {
+      const saved = formData['upsells']?.[u.id];
+      const checked = saved !== undefined;
+      const price   = saved || '';
+      html += `
+        <div class="upsell-item">
+          <label>
+            <input type="checkbox" id="ck-${u.id}" ${checked?'checked':''} onchange="toggleUpsell('${u.id}')">
+            ${u.label}
+          </label>
+          <input type="number" class="upsell-price" id="up-${u.id}" value="${price}"
+            placeholder="$0" min="0" ${checked?'':'disabled'}>
+          <span class="upsell-unit">${u.unit}</span>
+        </div>`;
+    });
+    html += '</div>';
+
+  } else {
+    html += '<div>';
+    step.fields.forEach(f => {
+      const val = formData[f.id] || '';
+      html += `<div class="field"><label>${f.label}</label>`;
+      if (f.type === 'select') {
+        html += `<select id="f-${f.id}">`;
+        f.options.forEach(o => html += `<option${val===o?' selected':''}>${o}</option>`);
+        html += '</select>';
+      } else {
+        html += `<input type="${f.type}" id="f-${f.id}" value="${val}" placeholder="${f.ph||''}">`;
+      }
+      html += '</div>';
+    });
+    html += '</div>';
+  }
+
+  const backBtn = currentStep > 0 ? `<button class="btn-back" id="btn-back">&larr; Back</button>` : '';
+  html += `<div style="display:flex;gap:10px;align-items:center;margin-top:1.5rem;">
+    ${backBtn}
+    <button class="btn-primary" id="btn-next" style="margin-top:0;flex:1">${isLast ? 'Start the counter &rarr;' : 'Next &rarr;'}</button>
+  </div>`;
+  document.getElementById('form-steps').innerHTML = html;
+
+  // pill listeners
+  if (step.type === 'pills') {
+    document.querySelectorAll('.pill').forEach(p => {
+      p.addEventListener('click', () => p.classList.toggle('selected'));
+    });
+  }
+
+  if (currentStep > 0) {
+    document.getElementById('btn-back').addEventListener('click', () => {
+      currentStep--;
+      renderStep();
+    });
+  }
+
+  document.getElementById('btn-next').addEventListener('click', () => {
+    saveStep();
+    if (isLast) startTimer();
+    else { currentStep++; renderStep(); }
+  });
+}
+
+function toggleUpsell(id) {
+  const ck = document.getElementById('ck-' + id);
+  const inp = document.getElementById('up-' + id);
+  inp.disabled = !ck.checked;
+  if (!ck.checked) inp.value = '';
+}
+
+function saveStep() {
+  const step = steps[currentStep];
+  if (step.type === 'pills') {
+    formData['otas'] = [...document.querySelectorAll('.pill.selected')].map(p => p.dataset.val);
+  } else if (step.type === 'upsells') {
+    formData['upsells'] = {};
+    UPSELLS.forEach(u => {
+      const ck  = document.getElementById('ck-' + u.id);
+      const inp = document.getElementById('up-' + u.id);
+      if (ck && ck.checked && inp.value) formData['upsells'][u.id] = parseFloat(inp.value) || 0;
+    });
+  } else {
+    step.fields.forEach(f => {
+      const el = document.getElementById('f-' + f.id);
+      if (el) formData[f.id] = el.value;
+    });
+  }
+}
+
+// ─── TIMER ────────────────────────────────────────────
+function startTimer() {
+  const rooms = parseFloat(formData.rooms)     || 10;
+  const rate  = parseFloat(formData.rate)      || 80;
+  const occ   = parseFloat(formData.occupancy) || 70;
+  const baseDaily = rooms * rate * (occ / 100);
+
+  // Upsell daily estimate: assume 40% of rooms buy each upsell once per stay avg
+  let upsellDaily = 0;
+  const us = formData['upsells'] || {};
+  Object.values(us).forEach(v => { upsellDaily += (v * rooms * 0.4); });
+
+  const totalDaily = baseDaily + upsellDaily;
+  costPerSec  = baseDaily  / 86400;
+  upsellPerSec = upsellDaily / 86400;
+  const totalPerSec = totalDaily / 86400;
+
+  // store for summary
+  formData['_baseDaily']    = baseDaily;
+  formData['_upsellDaily']  = upsellDaily;
+  formData['_totalDaily']   = totalDaily;
+  formData['_totalPerSec']  = totalPerSec;
+
+  document.getElementById('t-propname').textContent    = (formData.propName || 'YOUR PROPERTY').toUpperCase();
+  document.getElementById('m-rooms').textContent       = rooms;
+  document.getElementById('m-rate').textContent        = '$' + rate;
+  document.getElementById('m-cpm').textContent         = '$' + (totalPerSec * 60).toFixed(2);
+
+  showScreen('timer');
+  seconds = 0; paused = false;
+  timerInt = setInterval(tick, 1000);
+
+  // fire webhook if configured
+  if (MAKE_WEBHOOK_URL) {
+    fetch(MAKE_WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ...formData,
+        whatsapp: formData.whatsapp || '',
+        email: formData.email || '',
+        google: formData.google || '',
+        timestamp: new Date().toISOString()
+      })
+    }).catch(() => {});
+  }
+}
+
+function tick() {
+  if (paused) return;
+  seconds++;
+  const h = String(Math.floor(seconds/3600)).padStart(2,'0');
+  const m = String(Math.floor((seconds%3600)/60)).padStart(2,'0');
+  const s = String(seconds%60).padStart(2,'0');
+  document.getElementById('timer-display').textContent = `${h}:${m}:${s}`;
+  document.getElementById('cost-live').textContent = '$' + (formData['_totalPerSec'] * seconds).toFixed(2);
+}
+
+document.getElementById('btn-pause').addEventListener('click', () => {
+  paused = !paused;
+  document.getElementById('btn-pause').textContent = paused ? 'Resume' : 'Pause';
+});
+
+document.getElementById('btn-end').addEventListener('click', () => {
+  clearInterval(timerInt);
+  const _h = Math.floor(seconds/3600);
+  const _m = Math.floor((seconds%3600)/60);
+  const _s = seconds%60;
+  formData['meetingDuration'] = (_h>0?_h+'h ':'')+_m+'min '+_s+'s';
+  formData['meetingCost'] = (formData['_totalPerSec'] * seconds).toFixed(2);
+  // send final data with duration and cost to Make
+  if (MAKE_WEBHOOK_URL) {
+    fetch(MAKE_WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ...formData,
+        whatsapp: formData.whatsapp || '',
+        email: formData.email || '',
+        google: formData.google || '',
+        timestamp: new Date().toISOString()
+      })
+    }).catch(() => {});
+  }
+  showSummary();
+});
+
+document.getElementById('btn-restart').addEventListener('click', () => {
+  currentStep = 0; formData = {}; seconds = 0; paused = false;
+  clearInterval(timerInt);
+  renderStep();
+  showScreen('form');
+});
+
+// ─── SUMMARY ──────────────────────────────────────────
+function showSummary() {
+  const rooms      = parseFloat(formData.rooms)     || 10;
+  const rate       = parseFloat(formData.rate)      || 80;
+  const occ        = parseFloat(formData.occupancy) || 70;
+  const baseDaily  = formData['_baseDaily']   || 0;
+  const upDaily    = formData['_upsellDaily'] || 0;
+  const totalDaily = formData['_totalDaily']  || baseDaily;
+  const perSec     = formData['_totalPerSec'] || (baseDaily/86400);
+  const total      = perSec * seconds;
+
+  const h = Math.floor(seconds/3600);
+  const m = Math.floor((seconds%3600)/60);
+  const s = seconds%60;
+  const durStr = (h>0?h+'h ':'')+m+'min '+s+'s';
+
+  const missedBookings = Math.max(1, Math.round(total / rate));
+  const annualLoss     = (totalDaily * 365).toFixed(0);
+  const upsellStr      = Object.keys(formData['upsells']||{}).map(k => UPSELLS.find(u=>u.id===k)?.label).filter(Boolean).join(', ') || null;
+  const otaStr         = (formData.otas||[]).join(', ') || 'your current channels';
+
+  // fill hero
+  document.getElementById('s-prop').textContent  = formData.propName || 'your property';
+  document.getElementById('s-total').textContent = '$' + total.toFixed(2) + ' USD';
+  document.getElementById('s-dur').textContent   = 'in ' + durStr + ' of meeting';
+
+  // fill breakdown
+  document.getElementById('b-rooms').textContent    = rooms + ' rooms';
+  document.getElementById('b-rate').textContent     = '$' + rate + ' / night';
+  document.getElementById('b-occ').textContent      = occ + '%';
+  document.getElementById('b-daily').textContent    = '$' + baseDaily.toFixed(2) + ' / day';
+  document.getElementById('b-upsell').textContent   = upDaily > 0 ? '$' + upDaily.toFixed(2) + ' / day' : 'Not included';
+  document.getElementById('b-totaldaily').textContent = '$' + totalDaily.toFixed(2) + ' / day';
+  document.getElementById('b-permin').textContent   = '$' + (perSec*60).toFixed(2) + ' / min';
+  document.getElementById('b-dur').textContent      = durStr;
+  document.getElementById('b-total').textContent    = '$' + total.toFixed(2) + ' USD';
+
+  // insight
+  const upsellLine = upsellStr
+    ? ` We also factored in your upsells (${upsellStr}), which add an estimated <strong>$${upDaily.toFixed(0)}/day</strong> to your potential.`
+    : '';
+  document.getElementById('insight-text').innerHTML = `
+    <strong>All from your own numbers.</strong><br><br>
+    You told us you have <strong>${rooms} rooms</strong> at an average rate of <strong>$${rate}/night</strong>
+    with roughly <strong>${occ}% occupancy</strong>. That gives you a potential base revenue of
+    <strong>$${baseDaily.toFixed(0)}/day</strong>.${upsellLine}<br><br>
+    During this meeting, you weren't actively responding to inquiries on ${otaStr}.
+    Every minute without a response is a minute a potential guest moves on to your competitor.
+    That window of silence is exactly what this number measures.
+  `;
+
+  // real terms
+  const items = [
+    { icon: '⌛', text: `<strong>${missedBookings} unanswered booking${missedBookings!==1?'s':''}</strong> at your average rate` },
+    { icon: '📅', text: `If this happens every working day: <strong style="color:#E24B4A">$${Number(annualLoss).toLocaleString()} USD/year</strong> in missed potential` },
+    { icon: '📱', text: `One automated WhatsApp reply takes <strong>2 seconds</strong> — a booking confirmation takes the same time` },
+    { icon: '✅', text: `With the right automation, <strong>0 of these dollars</strong> need to be lost during any meeting` },
+  ];
+  document.getElementById('real-terms').innerHTML = items.map(i => `
+    <li>
+      <div class="bullet-icon" style="font-size:12px;">${i.icon}</div>
+      <span>${i.text}</span>
+    </li>`).join('');
+
+  showScreen('summary');
+}
+
+// ─── UTILS ────────────────────────────────────────────
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+}
+
+// ─── INIT ─────────────────────────────────────────────
+renderStep();
+</script>
+</body>
+</html>
