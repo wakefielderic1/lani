@@ -1,6 +1,20 @@
 // ═══════════════════════════════════════════════════════════════════
-// LANI CLAUDE BACKEND — v21.4
+// LANI CLAUDE BACKEND — v21.5
 // Changelog:
+//   v21.5 (Jul 2026): PRICE TRANSPARENCY — show how per-person totals are built
+//     All three ambassadors (Veronica ×2, Ericamhel) reported the total as
+//     "incorrect". The math was actually right (verified: 5 guests × 3 tours +
+//     room = 18,950 exact). The real problem was TRANSPARENCY: per-person tour
+//     lines showed only the subtotal (e.g. "Cenotes Tour: MXN 4,250"), so a
+//     5-guest tour looked inflated and the final total surprised the guest.
+//     Larra's booking (1 night, no tours) was the tell — she said her total was
+//     correct because "there's not much computation". Fix: the booking summary
+//     now shows the unit price × count for per-person and per-hour add-ons
+//     ("Cenotes Tour (MXN 850 × 5): MXN 4,250"), so the total is self-explanatory
+//     and never surprises. Flat add-ons (airport transfer) are unchanged — they
+//     don't multiply. No pricing logic touched; this is presentation only.
+//     Verified: per-person shows ×N, flat stays flat, no-tours case unchanged,
+//     works in EN/ES/TL.
 //   v21.4 (Jul 2026): SURNAME NUDGE (ask once, then accept) + explicit name ask
 //     Business preference: for a real reservation we'd like first + last name.
 //     Implemented SAFELY (the Riesa bug taught us never to hard-block on this):
@@ -2280,9 +2294,25 @@ function buildReadyToHoldReply(bookingFlow) {
   const addOns = Array.isArray(bd.add_ons) ? bd.add_ons : [];
   const dateRange = formatDateRangeLocalized(bd.check_in, bd.check_out, lang);
 
-  // Líneas de extras — usa los nombres EXACTOS del catálogo (ya enriquecidos)
+  // Líneas de extras — usa los nombres EXACTOS del catálogo (ya enriquecidos).
+  // v21.5: show HOW each add-on total is built so the price never surprises the
+  // guest. Ambassadors (Veronica, Ericamhel) flagged totals as "wrong" — the
+  // math was right, but per-person tours (price × N guests) weren't shown, so a
+  // 5-guest tour looked inflated. Now per_person add-ons display "price × N".
   const addOnLines = addOns.length > 0
-    ? "\n" + addOns.map(a => `➕ ${a.name}: ${money(a.subtotal)}`).join("\n")
+    ? "\n" + addOns.map(a => {
+        const unit = money(a.price);
+        if (a.type === "per_person") {
+          return `➕ ${a.name} (${unit} × ${guests}): ${money(a.subtotal)}`;
+        }
+        if (a.type === "per_person_per_night") {
+          return `➕ ${a.name} (${unit} × ${guests} × ${nights}): ${money(a.subtotal)}`;
+        }
+        if (a.type === "per_hour" && a.hours) {
+          return `➕ ${a.name} (${unit} × ${a.hours}h): ${money(a.subtotal)}`;
+        }
+        return `➕ ${a.name}: ${money(a.subtotal)}`;
+      }).join("\n")
     : "";
 
   if (lang === "es") {
