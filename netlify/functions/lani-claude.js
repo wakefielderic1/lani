@@ -1,6 +1,54 @@
 // ═══════════════════════════════════════════════════════════════════
-// LANI CLAUDE BACKEND — v21.2
+// LANI CLAUDE BACKEND — v21.4
 // Changelog:
+//   v21.4 (Jul 2026): SURNAME NUDGE (ask once, then accept) + explicit name ask
+//     Business preference: for a real reservation we'd like first + last name.
+//     Implemented SAFELY (the Riesa bug taught us never to hard-block on this):
+//     1. The name questions (ES/EN/TL) now explicitly ask for first AND last name
+//        ("¿A nombre de quién hago la reserva? Nombre y apellido, por favor").
+//     2. NEW gentle nudge in GATHERING_DATA: if the guest gives a clean one-word
+//        name and we have NOT already asked for the surname, LANI asks ONCE
+//        ("¡Gracias, Riesa! ¿Me compartes tu apellido?"). If the guest still
+//        gives one word (surname cue already in history), we PROCEED to the hold —
+//        never loop, never lose the booking. next_question stays "guest_name" so
+//        the extractor APPENDS the surname to the existing first name.
+//     3. Extractor rule added: a lone word replying to a last-name question is a
+//        SURNAME to combine ("Riesa" + "Delacruz" = "Riesa Delacruz"), never a
+//        replacement that erases the first name.
+//     The final validateReadyToHold guard stays lenient (v21.3): single-word
+//     names pass, only junk/brand/digits block. Verified 11/11.
+//     LANGUAGE FOCUS (EN / Tagalog / Taglish is the real market — Spanish is
+//     only the founder testing): (a) rewrote the new name prompts in natural
+//     Taglish, not stiff translation; (b) hardened detectLanguage() with the
+//     high-frequency Taglish words that real ambassador messages used and that
+//     were slipping through as English (kyo, ano, ng, sa, ilan, magkano, lang,
+//     na lang, mag-book, etc.). Removed "may" to avoid the English month "May"
+//     false-positive. Verified 27/27 incl. 0 English→TL false positives.
+//     TAGLISH NATURALNESS PASS (learned from the real ambassador transcripts —
+//     Veronica/Larra/Riesa): tuned every Tagalog string to match how Filipinos
+//     actually text a business. Fixed a grammar bug ("Wala problema" →
+//     "Walang problema"), added "po" for courtesy consistency, replaced
+//     textbook-formal Tagalog in error messages ("Paumanhin"/"Nagkakaroon") with
+//     casual Taglish ("Pasensya po"/"may konting technical issue"), and made the
+//     confirm/re-ask lines less stiff ("ng iyong booking" → "ng booking mo").
+//     Added a TAGLISH STYLE GUIDE to the language rule with real GOOD examples
+//     from Veronica's chat so the model generates the right register everywhere,
+//     not just in fallback strings. Also mirror the guest's mix: mostly-English
+//     Taglish gets a mostly-English reply, not heavy Tagalog.
+//   v21.3 (Jul 2026): HOTFIX — single-word names wrongly blocked (Riesa bug)
+//     Ambassador test (guest "Riesa", +639175794789) gave a legitimate one-word
+//     name. The v21.1 name-quality guard required first+last name, so
+//     validateReadyToHold() failed with "guest_name incomplete" on EVERY turn
+//     (confirmed in Netlify logs: 7× "READY_TO_HOLD validation failed" between
+//     02:30 and 06:01). The hold/Stripe were never created, no Bookings row was
+//     written, the payment link never arrived, and LANI kept saying "checking
+//     availability" — so the guest waited hours and left. A real lost booking,
+//     caused by our own v21.1 guard. Fix:
+//     1. Removed the hard "two words required" rule. A clean single-word name
+//        (Riesa, Larra) now PASSES. We still block genuine junk: question/brand
+//        words (Completo Para, Casa Frida, Available) and names with digits.
+//        Verified 8/8 (legit 1-word names pass; junk/digits blocked).
+//     2. Softened the name re-ask copy to not demand a last name.
 //   v21.2 (Jul 2026): Email re-ask experience polish
 //     Test (Ana Torres) showed LANI asking "what's your email?" three times
 //     when the guest changed dates twice WITHOUT answering the email in between.
@@ -678,7 +726,7 @@ const FIELD_QUESTIONS_ES = {
   check_in: "¿Cuál sería tu fecha de llegada (check-in)?",
   check_out: "¿Y la fecha de salida (check-out)?",
   guests_count: "¿Cuántas personas se hospedarían?",
-  guest_name: "¿Me confirmas tu nombre completo, por favor?",
+  guest_name: "¿A nombre de quién hago la reserva? Nombre y apellido, por favor 😊",
   guest_email: "¿Cuál es tu correo electrónico? Lo necesito para enviarte la confirmación.",
   guest_phone: "¿Me confirmas un número de teléfono donde podamos contactarte?"
 };
@@ -688,7 +736,7 @@ const FIELD_QUESTIONS_EN = {
   check_in: "What would be your check-in date?",
   check_out: "And the check-out date?",
   guests_count: "How many guests will be staying?",
-  guest_name: "Could you confirm your full name, please?",
+  guest_name: "What name should I put on the reservation? First and last name, please 😊",
   guest_email: "What's your email address? I'll need it to send you the confirmation.",
   guest_phone: "Could you share a phone number where we can reach you?"
 };
@@ -700,8 +748,8 @@ const FIELD_QUESTIONS_TL = {
   check_in: "Kailan kayo darating? 🗓️",
   check_out: "At kailan kayo aalis?",
   guests_count: "Ilan kayo?",                    // "mananabí" no existe — fix
-  guest_name: "Anong pangalan mo? (full name po)",
-  guest_email: "Anong email mo? Para mapadala ko ang confirmation.",
+  guest_name: "Anong pangalan ang ilalagay ko sa booking? First name at last name po 😊",
+  guest_email: "Anong email mo po? Para mapadala ko ang confirmation.",
   guest_phone: "May contact number ka ba?"
 };
 
@@ -1316,6 +1364,15 @@ CRITICAL EXTRACTION RULES:
    
    The ONLY way to remove a field is if the guest EXPLICITLY says 
    "olvida el nombre" / "ignore the name" / similar reset.
+   
+   ⚠️ SURNAME FOLLOW-UP (append, don't replace):
+   If the guest already gave a first name earlier (e.g. "Riesa") and LANI
+   then asked for their last name, the guest's next short reply is the
+   SURNAME. COMBINE them into the full name — do NOT overwrite.
+   - History: guest said "Riesa", LANI asked "What's your last name?",
+     guest replies "Delacruz" → guest_name = "Riesa Delacruz".
+   - A lone word replying to a last-name question is a surname, never a
+     brand-new name that erases the first name.
 
 4. INTENT detection:
    - Phrases like "quiero reservar", "I want to book", "resérvame", 
@@ -1566,8 +1623,13 @@ function detectLanguage(text) {
   if (!text) return "en";
   const lower = text.toLowerCase();
 
-  // Tagalog/Filipino markers — check first since some overlap with English
-  const tagalogMarkers = /\b(po|ako|gusto|magbook|anong|pwede|salamat|namin|kayo|sige|oo|hindi|ba|yung|nang|itong|sino|paano|kumusta|mahal|libre|alin|paki|maraming|dalawa|tatlo|apat|lima|araw|gabi|umaga|hapon|bukas|kahapon|ngayon|nandito|nandoon|kailan|saan|bakit|mayroon|meron|wala|lahat|talaga|syempre|naman|kasi|tapos|saka)\b/i;
+  // Tagalog/Filipino markers — check first since some overlap with English.
+  // Expanded from real ambassador messages (Veronica/Larra/Riesa tests) where
+  // heavy-English Taglish slipped through as "en". Added: high-frequency
+  // function words (ng, sa, mga, ang, ako, mo, ko, natin, niyo), common
+  // spellings (kyo, kayo, mag-book, magbook), and question words (ano, ilan,
+  // magkano). These are the words filipinos actually type when mixing English.
+  const tagalogMarkers = /\b(po|opo|ako|akin|ko|mo|niyo|niya|natin|namin|kayo|kyo|siya|kami|gusto|magbook|mag-book|magpa|nakapag|anong|ano|pwede|puwede|salamat|sige|oo|opo|hindi|di|ba|yung|iyong|nang|ng|sa|mga|ang|itong|ito|iyan|sino|paano|pano|kumusta|kamusta|mahal|libre|alin|ilan|magkano|paki|paki|maraming|dalawa|tatlo|apat|lima|araw|gabi|umaga|hapon|bukas|kahapon|ngayon|nandito|nandoon|kailan|saan|bakit|mayroon|meron|wala|lahat|talaga|syempre|sana|naman|kasi|tapos|saka|lang|lng|na lang|muna|din|rin|pa|nga)\b/i;
   if (tagalogMarkers.test(lower)) return "tl";
 
   // Spanish markers
@@ -1613,10 +1675,14 @@ function validateReadyToHold(bookingData, roomRates, maxGuests) {
     ).length;
     // If ANY token is a junk/brand/question word, or the name is a single word,
     // or it contains digits, treat the name as invalid — do NOT proceed to hold.
+    // v21.3 FIX (Riesa bug): a single-word name is NOT invalid on its own.
+    // Many guests (esp. Filipino/Indonesian/Brazilian) give one legitimate name
+    // like "Riesa". The v21.1 guard wrongly required two words, which SILENTLY
+    // blocked the hold forever and cost a real booking. Now we ONLY block names
+    // that are actually junk: question/brand words, or names containing digits.
+    // A clean single-word name passes and proceeds to the hold.
     if (junkCount > 0) {
       errors.push("guest_name invalid (contains question/brand words)");
-    } else if (nameTokens.length < 2) {
-      errors.push("guest_name incomplete (need first and last name)");
     } else if (/\d/.test(nameLower)) {
       errors.push("guest_name invalid (contains digits)");
     }
@@ -2004,14 +2070,14 @@ async function buildBookingFlowResponse({
       if (nameProblem) {
         nextQuestion = "guest_name";
         suggestedReply = language === "tl"
-          ? "Para makumpleto ko ang booking, pakibigay ang iyong buong pangalan (first at last name) 🙏"
+          ? "Pasensya, hindi ko masyadong nakuha ang pangalan mo 🙏 Pwede pakiulit? First name at last name po."
           : language === "es"
-          ? "Para completar tu reserva, ¿me compartes tu nombre completo (nombre y apellido)? 🙏"
-          : "To complete your booking, could you share your full name (first and last name)? 🙏";
+          ? "Perdona, no capté bien tu nombre — ¿me lo compartes de nuevo para completar la reserva? 🙏"
+          : "Sorry, I didn't quite catch your name — could you share it again for the booking? 🙏";
       } else {
         nextQuestion = "confirmation";
         suggestedReply = language === "tl"
-          ? "Pwede mo bang kumpirmahin ang mga detalye ng iyong booking bago ko i-hold?"
+          ? "Pwede mo bang i-confirm ang mga detalye ng booking mo bago ko i-hold? 😊"
           : language === "es"
           ? "¿Me confirmas los datos de tu reserva antes de apartarla?"
           : "Could you confirm your booking details before I place the hold?";
@@ -2019,6 +2085,50 @@ async function buildBookingFlowResponse({
     }
   } else {
     stage = "GATHERING_DATA";
+
+    // ── v21.4: SURNAME NUDGE (ask once, then accept) ──
+    // Business preference: for a real reservation we'd like a first + last name.
+    // But we must NEVER hard-block a booking over a missing surname — that's the
+    // Riesa bug (a one-word name looped silently and the guest left). So this is
+    // a gentle, bounded nudge: if the guest has given a name but it's a single
+    // clean word, and we have NOT already asked for the surname, ask ONCE. If the
+    // guest has already been asked (surname cue present in history) and still gave
+    // one word, we DON'T ask again — we let the normal flow proceed to the hold.
+    // This gets us the surname most of the time without ever costing a booking.
+    if (bookingData.guest_name && missing.length === 0) {
+      const nmeTokens = String(bookingData.guest_name).trim().split(/\s+/).filter(Boolean);
+      const alreadyAskedSurname = (previousMessages || []).some(m =>
+        m.role === "assistant" && m.content && m.content.includes("?") &&
+        /apellido|last name|surname/i.test(String(m.content))
+      );
+      if (nmeTokens.length < 2 && !alreadyAskedSurname) {
+        // Short-circuit: ask for the surname now with the SAME return shape this
+        // function uses everywhere else. We stay in GATHERING_DATA so no hold is
+        // placed yet. bookingDataPayload isn't built on this path (no Stripe), so
+        // we return the plain gathering fields.
+        return {
+          intent,
+          stage: "GATHERING_DATA",
+          data: bookingData,
+          missing_fields: missing,
+          next_question: "guest_name",
+          suggested_reply: (language === "tl"
+            ? `Salamat, ${nmeTokens[0]}! Ano pong last name mo? Kailangan ko lang para sa reservation 😊`
+            : language === "es"
+            ? `¡Gracias, ${nmeTokens[0]}! ¿Me compartes tu apellido? Lo necesito para la reserva 😊`
+            : `Thanks, ${nmeTokens[0]}! What's your last name? I just need it for the reservation 😊`),
+          total_amount: bookingData.total_amount || null,
+          nights: bookingData.nights || null,
+          booking_data: null,
+          language: language,
+          currency: currency || "MXN",
+          validation_errors: [],
+          checkout_url: null,
+          stripe_session_id: null,
+          temp_booking_code: null
+        };
+      }
+    }
 
     // ── Fix 2 (v19): History-based loop guard (replaces dead _field_attempts) ──
     // The old _field_attempts counter never persisted between turns, so it reset
@@ -2055,7 +2165,7 @@ async function buildBookingFlowResponse({
       nextQuestion = null;
       const stuckList = missing.join(", ");
       suggestedReply = language === "tl"
-        ? "Wala problema! Ipapasa ko na lang sa property team ang booking mo, at sila na ang mag-co-confirm ng huling detalye sa iyo directly 🌴"
+        ? "Walang problema po! Ipapasa ko na lang sa property team ang booking mo, at sila na ang bahalang mag-confirm ng huling detalye sa iyo 🌴"
         : language === "es"
         ? "¡No te preocupes! Paso tu reserva al equipo de la propiedad y ellos confirman contigo el último detalle directamente 🌴"
         : "No worries! I'll pass your booking to the property team and they'll confirm the last detail with you directly 🌴";
@@ -2075,7 +2185,7 @@ async function buildBookingFlowResponse({
           guest_email: {
             en: "Sometimes messages don't come through on my end — would you mind sending your email one more time? I need it for the confirmation 🙏",
             es: "A veces los mensajes no me llegan bien — ¿me reenvías tu correo una vez más? Lo necesito para la confirmación 🙏",
-            tl: "Minsan hindi dumadating ang mensahe sa akin — pwede mo bang i-send ulit ang email mo? Kailangan ko para sa confirmation 🙏"
+            tl: "Minsan hindi dumadating ang message sa akin 🙏 Pwede mo bang i-send ulit ang email mo? Kailangan ko po para sa confirmation."
           },
           guest_phone: {
             en: "A phone number is required to finalize the booking. Could you share yours?",
@@ -2085,7 +2195,7 @@ async function buildBookingFlowResponse({
           guest_name: {
             en: "I still need your full name to complete the booking — could you send it once more? 🙏",
             es: "Aún necesito tu nombre completo para la reserva — ¿me lo reenvías una vez más? 🙏",
-            tl: "Pangalan mo lang ang kulang para ma-confirm na — pwede mo bang ulitin? 🙏"
+            tl: "Kulang na lang po ang pangalan mo para ma-confirm 🙏 Pwede mo bang ulitin?"
           }
         };
         const variant = gentleVariants[chosenField];
@@ -2532,7 +2642,7 @@ exports.handler = async (event) => {
       const selectionMsg = detected === "AMBIGUOUS"
         ? `I found more than one property that could match. Which one are you interested in?\n\n${optionsText}\n\nReply with the number or name. 😊`
         : (preIdLanguage === "tl"
-          ? `Kumusta! Ako si LANI 👋 Alin sa aming mga property ang gusto mong makausap?\n\n${optionsText}\n\nSagot ng numero o pangalan.`
+          ? `Kumusta! Ako si LANI 👋 Alin sa aming mga property ang gusto mong makausap?\n\n${optionsText}\n\nReply lang po ng number or pangalan.`
           : preIdLanguage === "es"
           ? `¡Hola! Soy LANI 👋 ¿Con cuál de nuestras propiedades quieres contactar?\n\n${optionsText}\n\nResponde con el número o nombre.`
           : `Hi! I'm LANI 👋 Which of our properties would you like to contact?\n\n${optionsText}\n\nReply with the number or name.`);
@@ -2749,6 +2859,19 @@ DEFAULT LANGUAGE IS ENGLISH. If you cannot detect the guest's language clearly, 
 NEVER switch languages mid-conversation unless the guest switches first.
 NEVER default to Spanish — Spanish is only used when the guest writes in Spanish.
 This language rule applies to ALL messages: greetings, booking questions, confirmations, upsell offers, error messages.
+
+TAGLISH STYLE GUIDE (this is your PRIMARY market — Filipino guests):
+When responding in Taglish, write the way Filipinos actually text a business, warm and casual but polite:
+- Use "po" for politeness — you are the business, so stay courteous ("noted po!", "Anong email mo po?", "Sige po").
+- Keep booking terms, numbers, dates, and prices in English (July 15-17, MXN 1,600/night, email, booking, airport transfer). Filipinos mix these in naturally.
+- Tagalize English verbs with a hyphen: "i-add", "i-book", "i-confirm", "i-hold", "mag-book", "i-send".
+- Natural connectors: "Sa amin...", "kasama na", "gusto mo bang...", "kailangan ko lang", "na lang", "pwede".
+- GOOD examples (this is the target register):
+  * "July 15-17, 3 guests — noted po! 🗓️ Sa amin, entire home ang ina-rent — MXN 1,600/night, kasama na lahat ng amenities."
+  * "Salamat, Veronica! 😊 Gusto mo bang i-add ang cenotes tour (MXN 850/person)?"
+  * "Sige po, added na ang airport transfer 🚗 Anong email mo po para sa confirmation?"
+- AVOID textbook/formal Tagalog: don't write "Paumanhin", "Nagkakaroon", "ipapangalan", "mananatili". Use casual "Pasensya po", "may konting issue", "makakastay". If unsure, lean into English-heavy Taglish rather than deep formal Tagalog.
+- Match the guest's mix: if they write mostly English with a little Tagalog ("may available kyo room?"), reply mostly English with light Taglish warmth, not heavy Tagalog.
 
 TOUR & UPSELL OFFER RULE:
 After the guest confirms their check-in and check-out dates (and before you ask for their name), proactively mention 1-2 relevant tours or activities from the catalog naturally, not as a sales pitch.
@@ -3085,13 +3208,13 @@ ${!bookingFlow.checkout_url ? `\n⚠️ PAYMENT SYSTEM NOTE: The payment link co
     } catch (err) {
       if (err.message === "TIMEOUT") {
         assistantReply = language === "tl"
-          ? "Paumanhin, medyo mabagal ang koneksyon ko ngayon. Pakisubukan ulit sa ilang sandali."
+          ? "Pasensya po, medyo mabagal ang connection ko ngayon 🙏 Pwede mo bang subukan ulit in a moment?"
           : language === "es"
           ? "Lo siento, tengo una conexión lenta en este momento. Por favor intenta de nuevo en un momento."
           : "I'm sorry, I'm experiencing a slow connection right now. Please try again in a moment.";
       } else {
         assistantReply = language === "tl"
-          ? "Nagkakaroon ako ng teknikal na problema. Pakisubukan ulit sa ilang sandali."
+          ? "May konting technical issue ako ngayon 🙏 Pwede mo bang subukan ulit in a moment po?"
           : language === "es"
           ? "Estoy teniendo dificultades técnicas. Por favor intenta de nuevo en un momento."
           : "I'm experiencing a technical issue. Please try again in a moment.";
